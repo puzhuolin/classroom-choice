@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情景模拟 · 闯关</title>
+<style>
+  :root{
+    --red:#b81c22; --red-deep:#8c1418; --gold:#d4af37; --gold-light:#f2d57e;
+    --ink:#2b2622; --paper:#f6efe0; --paper2:#fffdf7;
+    --green:#1f7a4d; --blue:#1f5fa8; --gray:#8a7a5e;
+    --shadow:0 10px 30px rgba(80,20,20,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;color:var(--ink);
+    background:radial-gradient(circle at 12% 8%,rgba(212,175,55,.16),transparent 42%),radial-gradient(circle at 88% 92%,rgba(184,28,34,.12),transparent 46%),var(--paper);min-height:100vh;}
+  .wrap{max-width:880px;margin:0 auto;padding:26px 18px 60px;}
+  .screen{display:none;animation:fade .4s ease;} .screen.show{display:block;}
+  @keyframes fade{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  h1,h2,h3{font-family:"KaiTi","STKaiti","Kaiti SC","Microsoft YaHei",serif;}
+
+  .intro-hero{background:linear-gradient(160deg,var(--red),var(--red-deep));color:#fff;border-radius:20px;padding:34px 28px;box-shadow:var(--shadow);position:relative;overflow:hidden;text-align:center;}
+  .intro-hero::after{content:"";position:absolute;right:-70px;top:-70px;width:230px;height:230px;border:16px solid rgba(212,175,55,.22);border-radius:50%;}
+  .intro-hero .kicker{font-size:13px;letter-spacing:5px;color:var(--gold-light);margin-bottom:8px;}
+  .intro-hero h1{font-size:36px;margin:4px 0 10px;letter-spacing:4px;}
+  .intro-hero .sub{font-size:14.5px;line-height:1.85;max-width:600px;margin:0 auto;opacity:.95;}
+  .intro-hero .tag2{display:inline-block;margin-top:16px;background:rgba(255,255,255,.14);border:1px solid rgba(242,213,126,.6);border-radius:20px;padding:6px 16px;font-size:13px;color:var(--gold-light);}
+
+  .card{background:var(--paper2);border-radius:18px;padding:24px;box-shadow:var(--shadow);margin-top:18px;}
+  .card h3{color:var(--red-deep);font-size:19px;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+  .card p{font-size:14.5px;line-height:1.9;color:#4a4038;margin-bottom:10px;}
+  .role-box{display:flex;gap:14px;align-items:flex-start;background:#fff7e6;border:2px dashed var(--gold);border-radius:14px;padding:16px 18px;margin:6px 0 4px;}
+  .role-box .ico{font-size:30px;line-height:1;}
+  .role-box b{color:var(--red-deep);}
+  .role-box p{margin:0;font-size:14.5px;line-height:1.85;color:#5c4a20;}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px;}
+  .pl{background:#fff;border-radius:12px;padding:12px 14px;border-left:5px solid var(--gold);box-shadow:0 3px 10px rgba(0,0,0,.05);}
+  .pl b{display:block;font-size:14px;color:var(--red-deep);margin-bottom:4px;}
+  .pl span{font-size:12.5px;line-height:1.6;color:#6b5b46;}
+  @media(max-width:620px){.legend{grid-template-columns:1fr;}}
+
+  .btn{border:none;cursor:pointer;font-family:inherit;font-size:16px;background:var(--red);color:#fff;padding:13px 34px;border-radius:12px;transition:.18s;box-shadow:0 6px 16px rgba(184,28,34,.32);letter-spacing:1px;}
+  .btn:hover{background:var(--red-deep);transform:translateY(-2px);}
+  .btn.gold{background:var(--gold);color:#3a2c08;box-shadow:0 6px 16px rgba(212,175,55,.35);}
+  .btn.ghost{background:#fff;color:var(--red);border:2px solid var(--red);box-shadow:none;}
+  .btn.ghost:hover{background:#fff3f3;}
+  .center{text-align:center;}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .act-tag{font-size:13.5px;font-weight:700;color:#fff;background:var(--red);padding:7px 16px;border-radius:20px;box-shadow:0 4px 10px rgba(184,28,34,.25);}
+  .progress-dots{display:flex;gap:6px;align-items:center;}
+  .progress-dots i{width:10px;height:10px;border-radius:50%;background:#ddcfae;display:block;}
+  .progress-dots i.on{background:var(--red);} .progress-dots i.done{background:var(--gold);}
+
+  .pairs{background:var(--paper2);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .pair{border-radius:10px;padding:10px 12px;background:#f7f2e6;border-left:4px solid #d9cba9;transition:.25s;}
+  .pair .pn{font-size:13px;font-weight:700;color:#6b5b46;line-height:1.45;}
+  .pair .ps{font-size:11.5px;color:#a08a66;margin-top:3px;}
+  .pair.ok{background:#e9f7ef;border-left-color:var(--green);} .pair.ok .pn{color:var(--green);} .pair.ok .ps{color:var(--green);}
+  .pair.bad{background:#fdeeee;border-left-color:var(--red);} .pair.bad .pn{color:var(--red-deep);} .pair.bad .ps{color:var(--red);}
+  @media(max-width:620px){.pairs{grid-template-columns:1fr;}}
+
+  .gauges{background:var(--paper2);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);margin-bottom:14px;display:grid;gap:10px;}
+  .g-row{display:flex;align-items:center;gap:12px;}
+  .g-row .gl{width:84px;font-size:14px;font-weight:700;flex-shrink:0;}
+  .g-track{flex:1;height:15px;background:#ece0c6;border-radius:9px;overflow:hidden;}
+  .g-fill{height:100%;width:0;border-radius:9px;transition:width .7s cubic-bezier(.2,.8,.2,1);}
+  .g-val{width:42px;text-align:right;font-weight:800;font-size:15px;flex-shrink:0;}
+
+  .scene-card{background:var(--paper2);border-radius:18px;padding:26px;box-shadow:var(--shadow);position:relative;}
+  .scene-card::before{content:"";position:absolute;left:0;top:24px;bottom:24px;width:5px;background:linear-gradient(var(--gold),var(--red));border-radius:4px;}
+  .scene-text{font-size:15.5px;line-height:1.95;color:#3d342c;}
+  .media{width:100%;border-radius:12px;display:block;margin-bottom:14px;box-shadow:0 4px 14px rgba(0,0,0,.08);}
+  .scene-q{font-size:19px;font-weight:800;color:var(--red-deep);margin:16px 0 18px;line-height:1.6;}
+  .choices{display:grid;gap:12px;}
+  .choice{background:#fff;border:2px solid #e6d8bb;border-radius:14px;padding:15px 18px;cursor:pointer;transition:.16s;display:flex;gap:14px;align-items:flex-start;text-align:left;font-family:inherit;}
+  .choice:hover{border-color:var(--red);background:#fff8f4;transform:translateX(3px);box-shadow:0 6px 16px rgba(184,28,34,.12);}
+  .choice .mk{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red-deep));color:var(--gold-light);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;font-size:15px;}
+  .choice .ct{font-size:15px;line-height:1.7;color:#2b2622;}
+
+  .overlay{position:fixed;inset:0;background:rgba(40,15,15,.58);display:none;align-items:center;justify-content:center;z-index:60;padding:20px;}
+  .overlay.show{display:flex;animation:fade .25s;}
+  .modal{background:var(--paper2);border-radius:20px;padding:28px;max-width:540px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.32);border:3px solid var(--gold);max-height:88vh;overflow:auto;}
+  .modal .m-kicker{font-size:12px;font-weight:800;letter-spacing:2px;color:var(--gold);margin-bottom:6px;}
+  .modal .m-title{font-size:20px;color:var(--red-deep);margin-bottom:12px;font-family:"KaiTi",serif;font-weight:800;line-height:1.5;}
+  .modal .m-title.ok{color:var(--green);}
+  .modal .m-text{font-size:14.5px;line-height:1.95;color:#3d342c;margin-bottom:14px;}
+  .anchor{background:#fff7e6;border:1px dashed var(--gold);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.85;color:#5c4a20;margin-bottom:16px;}
+  .anchor b{color:var(--red-deep);}
+  .status-chip{display:inline-block;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:20px;margin-bottom:16px;}
+  .status-chip.ok{background:#e6f7ee;color:var(--green);} .status-chip.bad{background:#fdeaea;color:var(--red);}
+  .delta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;}
+  .delta .chip{font-size:13px;font-weight:700;padding:6px 12px;border-radius:20px;background:#eee3cc;}
+  .chip.up{background:#e6f7ee;color:var(--green);} .chip.down{background:#fdeaea;color:var(--red);} .chip.flat{background:#f0ece2;color:#8a7a5e;}
+  .m-actions{display:flex;justify-content:flex-end;gap:10px;}
+
+  .end-hero{border-radius:20px;padding:32px 26px;text-align:center;box-shadow:var(--shadow);color:#fff;position:relative;overflow:hidden;}
+  .end-hero.g1{background:linear-gradient(160deg,#b81c22,#7a1015);}
+  .end-hero.g2{background:linear-gradient(160deg,#1f7a4d,#14563a);}
+  .end-hero.g3{background:linear-gradient(160deg,#5a6a78,#3b4650);}
+  .end-hero .em{font-size:52px;margin-bottom:4px;}
+  .end-hero h2{font-size:28px;letter-spacing:3px;margin-bottom:8px;}
+  .end-hero .sub{font-size:14.5px;line-height:1.8;opacity:.95;max-width:600px;margin:0 auto;}
+  .score-badge{display:inline-block;margin-top:16px;background:rgba(255,255,255,.16);border:2px solid var(--gold);border-radius:14px;padding:10px 22px;font-size:14px;}
+  .score-badge b{font-size:28px;color:var(--gold-light);font-family:"KaiTi",serif;}
+
+  .rline{display:flex;gap:10px;padding:10px 0;border-bottom:1px dashed #e2d5b8;font-size:13.5px;line-height:1.7;}
+  .rline:last-child{border-bottom:none;}
+  .rline .rn{width:60px;flex-shrink:0;color:var(--gold);font-weight:800;}
+  .rline .rt{flex:1;color:#4a4038;}
+  .rline .rv{flex-shrink:0;font-weight:800;}
+  .rv.ok{color:var(--green);} .rv.bad{color:var(--red);}
+
+  .tab{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .tab th,.tab td{padding:11px 10px;border-bottom:1px solid #e8dcc2;text-align:left;line-height:1.7;vertical-align:top;}
+  .tab th{background:#f7f2e6;color:var(--red-deep);font-size:13px;font-weight:800;}
+  .tab td:first-child{width:150px;font-weight:700;color:var(--red-deep);}
+  .chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;}
+  .chain .node{background:#fff;border:2px solid var(--gold);border-radius:10px;padding:9px 14px;font-size:13.5px;font-weight:700;color:var(--red-deep);}
+  .chain .ar{color:var(--gold);font-weight:800;}
+  .chain .note{width:100%;font-size:12.5px;color:#8a7a5e;margin-top:6px;line-height:1.7;}
+  .qlist{counter-reset:q;list-style:none;}
+  .qlist li{counter-increment:q;position:relative;padding-left:30px;font-size:14px;line-height:1.9;color:#4a4038;margin-bottom:10px;}
+  .qlist li::before{content:counter(q);position:absolute;left:0;top:0;width:21px;height:21px;border-radius:50%;background:var(--red);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .navrow{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .mini{font-size:12.5px;color:#8a6d3b;text-decoration:none;}
+  .mini:hover{color:var(--red);}
+  .empty{text-align:center;padding:60px 20px;color:#8a6d3b;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <div class="empty" id="loading">正在加载情景…</div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="m-kicker" id="mKicker">这一刻</div>
+    <div class="m-title" id="mTitle"></div>
+    <div id="mExtra"></div>
+    <div class="m-text" id="mText"></div>
+    <div class="anchor" id="mAnchor"></div>
+    <div class="m-actions"><button class="btn" id="mNext" onclick="nextNode()">继续 ▶</button></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   通用情景引擎（单人闯关）
+   情景来自 /api/scenario，全部字段数据驱动，不改代码即可换内容
+   ========================================================= */
+let SC = null;
+let idx = 0;
+let picks = [];          // 每幕选中的选项对象
+let pairHits = [];       // judge：每对关系的判定记录
+let dimVals = {};        // attrs：各维度当前值
+const overlay = document.getElementById("overlay");
+
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function mediaHtml(m){
+  const url = String(m.url || "");
+  if(!url) return "";
+  const isVid = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+  const cap = m.caption ? '<div style="font-size:12px;color:#8a7a5e;text-align:center;margin:-4px 0 14px;">' + esc(m.caption) + '</div>' : "";
+  return isVid
+    ? '<video class="media" src="' + esc(url) + '" controls playsinline></video>' + cap
+    : '<img class="media" src="' + esc(url) + '" alt="' + esc(m.caption || "") + '">' + cap;
+}
+function qs(k){ return new URLSearchParams(location.search).get(k); }
+function letters(i){ return ["A","B","C","D","E"][i] || String(i+1); }
+
+/* ---------- 启动 ---------- */
+(async function(){
+  try{
+    const id = qs("s");
+    const r = await fetch("/api/scenario" + (id ? ("?id=" + encodeURIComponent(id)) : ""));
+    if(!r.ok) throw new Error("not found");
+    SC = await r.json();
+    document.title = SC.title + " · 情景模拟";
+    renderIntro();
+  }catch(e){
+    document.getElementById("app").innerHTML = '<div class="empty">😕 找不到这个情景。<br><br><a class="mini" href="/">← 回到情景大厅</a></div>';
+  }
+})();
+
+function renderIntro(){
+  const it = SC.intro || {};
+  const mode = SC.mode || "judge";
+  let legend = "";
+  const lg = it.legend || [];
+  if(lg.length){
+    legend = '<div class="card"><h3>' + esc(it.legendTitle || "先认一下这几组关系") + '</h3><div class="legend">' +
+      lg.map(function(x){ return '<div class="pl"><b>' + esc(x.name) + '</b><span>' + esc(x.desc || "") + '</span></div>'; }).join("") +
+      '</div></div>';
+  } else if(mode === "attrs" && (SC.dims||[]).length){
+    legend = '<div class="card"><h3>你要守住的几个维度</h3><div class="legend">' +
+      SC.dims.map(function(d){ return '<div class="pl" style="border-left-color:' + (d.color||"#d4af37") + '"><b>' + esc((d.icon||"") + " " + d.name) + '</b><span>起始值 ' + ((SC.base||{})[d.key] || 0) + ' / 100</span></div>'; }).join("") +
+      '</div></div>';
+  }
+
+  document.getElementById("app").innerHTML =
+    '<div class="screen show">' +
+      '<div class="intro-hero">' +
+        '<div class="kicker">' + esc(it.kicker || "情 景 模 拟") + '</div>' +
+        '<h1>' + esc(SC.emoji ? SC.emoji + " " : "") + esc(SC.title) + '</h1>' +
+        '<div class="sub">' + esc(it.lead || SC.subtitle || "") + '</div>' +
+        (SC.subtitle ? '<div class="tag2">' + esc(SC.subtitle) + '</div>' : '') +
+      '</div>' +
+      (SC.cover && SC.cover.url ? '<div class="card" style="padding:10px 10px 0;overflow:hidden;">' + mediaHtml(SC.cover) + '</div>' : '') +
+      (it.roleName ? '<div class="card"><h3>🎬 你在这局里是谁</h3><div class="role-box"><div class="ico">🧑‍💼</div><div>' +
+        '<p><b>' + esc(it.roleName) + '</b>' + (it.roleDesc ? '　' + esc(it.roleDesc) : '') + '</p></div></div>' +
+        (it.task ? '<p style="margin-top:14px;color:#8a6d3b;font-size:13.5px;">' + esc(it.task) + '</p>' : '') +
+        '</div>' : '') +
+      legend +
+      '<div class="card" style="text-align:center;"><button class="btn" onclick="startGame()">开始这一局 ▶</button>' +
+        '<div style="margin-top:12px;"><a class="mini" href="/">← 回到情景大厅</a></div></div>' +
+    '</div>';
+}
+
+/* ---------- 开局 ---------- */
+function startGame(){
+  idx = 0;
+  picks = [];
+  pairHits = (SC.pairs || []).map(function(){ return []; });
+  dimVals = {};
+  (SC.dims || []).forEach(function(d){ dimVals[d.key] = Number((SC.base || {})[d.key] || 0); });
+  overlay.classList.remove("show");
+  renderShell();
+  renderNode();
+}
+
+/* 页面骨架只建一次 */
+function renderShell(){
+  const mode = SC.mode || "judge";
+  let panel = "";
+  if(mode === "judge" && (SC.pairs || []).length){
+    panel = '<div class="pairs" id="pairs"></div>';
+  } else if(mode === "attrs"){
+    panel = '<div class="gauges" id="gauges">' +
+      (SC.dims || []).map(function(d){
+        return '<div class="g-row"><div class="gl" style="color:' + (d.color || "#b81c22") + '">' + esc((d.icon||"") + " " + d.name) + '</div>' +
+          '<div class="g-track"><div class="g-fill" id="fill-' + d.key + '" style="background:' + (d.color || "#b81c22") + '"></div></div>' +
+          '<div class="g-val" id="val-' + d.key + '">' + (dimVals[d.key] || 0) + '</div></div>';
+      }).join("") + '</div>';
+  }
+  document.getElementById("app").innerHTML =
+    '<div class="screen show">' +
+      '<div class="navrow"><a class="mini" href="/">← 情景大厅</a><span class="mini">' + esc(SC.title) + '</span></div>' +
+      '<div class="topbar"><div class="act-tag" id="actTag"></div><div class="progress-dots" id="dots"></div></div>' +
+      panel +
+      '<div class="scene-card"><div id="mediaBox"></div><div class="scene-text" id="sceneText"></div>' +
+      '<div class="scene-q" id="sceneQ"></div><div class="choices" id="choices"></div></div>' +
+    '</div>';
+  renderPanel();
+  renderDots();
+}
+
+function renderDots(){
+  const d = document.getElementById("dots");
+  if(!d) return;
+  d.innerHTML = "";
+  SC.stages.forEach(function(_, i){
+    const i2 = document.createElement("i");
+    if(i < idx) i2.className = "done"; else if(i === idx) i2.className = "on";
+    d.appendChild(i2);
+  });
+}
+
+function pairStatus(i){
+  const h = pairHits[i] || [];
+  if(!h.length) return null;
+  const bad = h.filter(function(x){ return !x.ok; });
+  return bad.length ? { ok: false, side: bad[0].side } : { ok: true, side: "" };
+}
+
+function renderPanel(){
+  const mode = SC.mode || "judge";
+  if(mode === "judge" && (SC.pairs || []).length){
+    const box = document.getElementById("pairs");
+    if(!box) return;
+    box.innerHTML = "";
+    SC.pairs.forEach(function(p, i){
+      const st = pairStatus(i);
+      const el = document.createElement("div");
+      el.className = "pair" + (st ? (st.ok ? " ok" : " bad") : "");
+      let ps = "待检验";
+      if(st) ps = st.ok ? "✔ 已经统一" : "⚠ 偏向了「" + st.side + "」";
+      el.innerHTML = '<div class="pn">' + esc(p.a) + " ⇄ " + esc(p.b) + '</div><div class="ps">' + ps + '</div>';
+      box.appendChild(el);
+    });
+  } else if(mode === "attrs"){
+    (SC.dims || []).forEach(function(d){
+      const f = document.getElementById("fill-" + d.key);
+      const v = document.getElementById("val-" + d.key);
+      if(f) f.style.width = Math.max(0, Math.min(100, dimVals[d.key] || 0)) + "%";
+      if(v) v.textContent = dimVals[d.key] || 0;
+    });
+  }
+}
+
+function renderNode(){
+  const st = SC.stages[idx];
+  document.getElementById("actTag").textContent = (st.title || ("第 " + (idx+1) + " 幕")) + "　" + (idx+1) + "/" + SC.stages.length;
+  const mb = document.getElementById("mediaBox");
+  if(mb) mb.innerHTML = (st.media && st.media.url) ? mediaHtml(st.media) : "";
+  document.getElementById("sceneText").textContent = st.scene || "";
+  document.getElementById("sceneText").style.display = st.scene ? "block" : "none";
+  document.getElementById("sceneQ").textContent = st.q || "";
+  const box = document.getElementById("choices");
+  box.innerHTML = "";
+  st.options.forEach(function(o, i){
+    const b = document.createElement("button");
+    b.className = "choice";
+    b.innerHTML = '<span class="mk">' + letters(i) + '</span><span class="ct">' + esc(o.label) + '</span>';
+    b.onclick = function(){ choose(i); };
+    box.appendChild(b);
+  });
+  renderDots();
+}
+
+/* ---------- 选择 ---------- */
+function choose(i){
+  const st = SC.stages[idx];
+  const o = st.options[i];
+  const mode = SC.mode || "judge";
+  picks.push(o);
+
+  let chipHtml = "";
+  if(mode === "judge"){
+    const ok = !!o.ok;
+    if(st.pair != null && pairHits[st.pair]) pairHits[st.pair].push({ ok: ok, side: o.side || "" });
+    const p = (SC.pairs || [])[st.pair];
+    if(p){
+      const ps = pairStatus(st.pair);
+      chipHtml = '<div class="status-chip ' + (ps && ps.ok ? "ok" : "bad") + '">' +
+        (ps && ps.ok ? esc(p.a) + " 与 " + esc(p.b) + "：这一对已经统一"
+                     : "这一手偏向了「" + esc(o.side || "") + "」，" + esc(p.a) + "与" + esc(p.b) + "还差一半") + '</div>';
+    }
+  } else {
+    const d = o.delta || {};
+    const dims = SC.dims || [];
+    const chips = dims.filter(function(x){ return d[x.key]; }).map(function(x){
+      const n = Number(d[x.key]);
+      dimVals[x.key] = Math.max(0, Math.min(100, (dimVals[x.key] || 0) + n));
+      return '<span class="chip ' + (n > 0 ? "up" : "down") + '">' + esc((x.icon||"") + x.name) + " " + (n > 0 ? "+" : "") + n + '</span>';
+    }).join("");
+    chipHtml = '<div class="delta">' + (chips || '<span class="chip flat">本幕无属性变化</span>') + '</div>';
+    renderPanel();
+  }
+
+  document.getElementById("mKicker").textContent = (st.title || "第" + (idx+1) + "幕") + "　·　你的选择";
+  const tt = document.getElementById("mTitle");
+  const isOk = mode === "judge" ? !!o.ok : true;
+  tt.textContent = (mode === "judge" ? (isOk ? "✅ " : "⚠️ ") : "") + (o.title || (isOk ? "继续" : "这一步有代价"));
+  tt.className = "m-title" + (mode === "judge" && isOk ? " ok" : "");
+  document.getElementById("mExtra").innerHTML = chipHtml;
+  document.getElementById("mText").innerHTML = o.text || "";
+  const anchor = document.getElementById("mAnchor");
+  anchor.innerHTML = o.anchor ? ("<b>理论锚点：</b>" + o.anchor) : "";
+  anchor.style.display = o.anchor ? "block" : "none";
+  overlay.classList.add("show");
+  renderPanel();
+}
+
+function nextNode(){
+  overlay.classList.remove("show");
+  idx++;
+  if(idx >= SC.stages.length){ showEnding(); return; }
+  renderNode();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* ---------- 结局 ---------- */
+function matchEnding(ctx){
+  const list = (SC.endings && SC.endings.length) ? SC.endings : [{ type:"default", emoji:"🎯", title:"结束", text:"" }];
+  if(SC.mode === "attrs"){
+    const dims = (SC.dims || []).map(function(d){ return d.key; });
+    const vals = dims.map(function(k){ return dimVals[k]; });
+    const min = Math.min.apply(null, vals);
+    const weakest = dims[vals.indexOf(min)];
+    for(const e of list){
+      if(e.type === "minDim" && min >= (Number(e.min) || 0)) return e;
+      if(e.type === "weakest" && e.dim === weakest) return e;
+      if(e.type === "default") return e;
+    }
+  } else {
+    const score = picks.filter(function(o){ return o.ok; }).length;
+    for(const e of list){
+      if(e.type === "score" && score >= (Number(e.min) || 0)) return e;
+      if(e.type === "default") return e;
+    }
+  }
+  return list[list.length - 1];
+}
+
+function showEnding(){
+  const mode = SC.mode || "judge";
+  const score = picks.filter(function(o){ return o.ok; }).length;
+  const unified = (SC.pairs || []).filter(function(_, i){ const s = pairStatus(i); return s && s.ok; }).length;
+
+  const end = matchEnding({ score: score });
+  const tone = end.type === "default" ? "g3" : "g1";
+  const grade = (mode === "judge" ? (score >= SC.stages.length - 1 ? "g1" : (score >= SC.stages.length - 2 ? "g2" : "g3")) : "g1");
+
+  let badge = "";
+  if(mode === "judge"){
+    badge = '关键抉择正确 <b>' + score + '</b> / ' + SC.stages.length +
+      ((SC.pairs||[]).length ? '　·　关系立住 <b>' + unified + '</b> / ' + SC.pairs.length : '');
+  } else {
+    const dims = SC.dims || [];
+    const vals = dims.map(function(d){ return dimVals[d.key]; });
+    const min = Math.min.apply(null, vals);
+    badge = '综合国力 <b>' + Math.round(vals.reduce(function(a, b){ return a + b; }, 0) / (vals.length || 1)) +
+      '</b>　·　最短板 <b>' + min + '</b>';
+  }
+
+  /* 复盘表 */
+  let review = "";
+  picks.forEach(function(o, i){
+    const mark = mode === "judge" ? (o.ok ? '<span class="rv ok">✔</span>' : '<span class="rv bad">✘</span>') : '<span class="rv">·</span>';
+    review += '<div class="rline"><span class="rn">' + esc((SC.stages[i].title || "").split(" · ")[0] || ("第" + (i+1) + "幕")) + '</span>' +
+      '<span class="rt">' + esc(o.label) + '</span>' + mark + '</div>';
+  });
+
+  /* 四对关系复盘 */
+  let pairReview = "";
+  if((SC.pairs || []).length){
+    pairReview = '<div class="card"><h3>🔍 四对关系复盘：哪一对没立住</h3><div>' +
+      SC.pairs.map(function(p, i){
+        const st = pairStatus(i);
+        const txt = !st ? "未涉及" : (st.ok ? "✔ 已经统一" : "⚠ 偏「" + st.side + "」");
+        const color = !st ? "#8a7a5e" : (st.ok ? "var(--green)" : "var(--red)");
+        return '<div class="rline"><span class="rt"><b style="color:var(--red-deep)">' + esc(p.a) + " ⇄ " + esc(p.b) + '</b><br>' +
+          '<span style="color:' + color + ';font-weight:700;">' + txt + '</span>' + (p.hint ? '　' + esc(p.hint) : '') + '</span></div>';
+      }).join("") + '</div></div>';
+  }
+
+  /* 属性复盘 */
+  let dimReview = "";
+  if(mode === "attrs" && (SC.dims||[]).length){
+    dimReview = '<div class="card"><h3>📊 三个维度最后走到哪里</h3><div>' +
+      SC.dims.map(function(d){
+        const v = dimVals[d.key] || 0;
+        const b = Number((SC.base || {})[d.key] || 0);
+        const n = v - b;
+        return '<div class="rline"><span class="rt"><b style="color:' + (d.color||"#b81c22") + '">' + esc((d.icon||"") + d.name) + '</b>　' + v + ' / 100</span>' +
+          '<span class="rv ' + (n >= 0 ? "ok" : "bad") + '">' + (n > 0 ? "+" : "") + n + '</span></div>';
+      }).join("") + '</div></div>';
+  }
+
+  /* 自定义教学板块（情景里写的 sections） */
+  const sections = (SC.sections || []).map(function(s){
+    return '<div class="card"><h3>' + esc(s.title) + '</h3>' + s.html + '</div>';
+  }).join("");
+
+  /* 讨论题 */
+  const discuss = (SC.discuss || []).length
+    ? '<div class="card"><h3>💬 课堂讨论（带着你的复盘表发言）</h3><ol class="qlist">' +
+      SC.discuss.map(function(q){ return '<li>' + esc(q) + '</li>'; }).join("") + '</ol></div>'
+    : "";
+
+  document.getElementById("app").innerHTML =
+    '<div class="screen show">' +
+      '<div class="navrow"><a class="mini" href="/">← 情景大厅</a><span class="mini">' + esc(SC.title) + '</span></div>' +
+      '<div class="end-hero ' + grade + '">' +
+        '<div class="em">' + esc(end.emoji || "🎯") + '</div>' +
+        '<h2>' + esc(end.title || "结束") + '</h2>' +
+        '<div class="sub">' + esc(end.text || "") + '</div>' +
+        '<div class="score-badge">' + badge + '</div>' +
+      '</div>' +
+      '<div class="card"><h3>📋 你的' + SC.stages.length + '个选择</h3><div>' + review + '</div></div>' +
+      pairReview + dimReview + sections + discuss +
+      '<div class="card center">' +
+        '<button class="btn gold" onclick="startGame()">↻ 换一条路，再走一遍</button>' +
+        '<button class="btn ghost" style="margin-left:10px;" onclick="location.href=\'/\'">回到大厅</button>' +
+      '</div>' +
+    '</div>';
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>课堂 · 情景模拟课堂 入口</title>
+<style>
+  :root{
+    --red:#b81c22;--red-deep:#8c1418;--gold:#d4af37;--gold-l:#f2d57e;
+    --ink:#2b2622;--paper:#f6efe0;--paper2:#fffdf7;--green:#1f7a4d;--blue:#1f5fa8;
+    --shadow:0 10px 30px rgba(80,20,20,.13);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;color:var(--ink);
+    background:
+      radial-gradient(circle at 8% 4%,rgba(212,175,55,.18),transparent 40%),
+      radial-gradient(circle at 94% 96%,rgba(184,28,34,.13),transparent 44%),
+      var(--paper);
+    min-height:100vh;padding:0 0 40px;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:26px 18px 0;}
+
+  /* 顶部 */
+  header{text-align:center;margin-bottom:22px;}
+  .seal{
+    width:64px;height:64px;margin:0 auto 12px;border-radius:16px;
+    background:linear-gradient(135deg,var(--red),var(--red-deep));color:var(--gold-l);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:15px;line-height:1.05;text-align:center;
+    border:2px solid var(--gold);transform:rotate(-4deg);box-shadow:0 6px 18px rgba(140,20,24,.28);
+  }
+  h1{font-family:"KaiTi","STKaiti",serif;font-size:31px;color:var(--red-deep);letter-spacing:3px;}
+  .sub{font-size:13.5px;color:#8a6d3b;margin-top:7px;letter-spacing:.5px;}
+
+  /* 连接条 */
+  .bar{
+    background:var(--paper2);border-radius:14px;box-shadow:var(--shadow);
+    padding:13px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px;
+    border-left:5px solid var(--gold);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:#c9bda8;flex:none;}
+  .dot.on{background:var(--green);box-shadow:0 0 0 4px rgba(31,122,77,.15);}
+  .dot.off{background:var(--red);box-shadow:0 0 0 4px rgba(184,28,34,.14);}
+  .bar .st{font-size:13px;color:#5b4b33;flex:1 1 260px;line-height:1.6;}
+  .bar .st b{color:var(--red-deep);}
+  .bar input{
+    font-family:inherit;font-size:13px;padding:8px 11px;border:2px solid #e0d2b0;border-radius:9px;
+    background:#fff;color:#4a4038;width:290px;max-width:100%;outline:none;
+  }
+  .bar input:focus{border-color:var(--gold);}
+  .bar button{
+    font-family:inherit;cursor:pointer;border:none;border-radius:9px;
+    font-size:12.5px;font-weight:700;padding:9px 14px;background:#f2ead6;color:#7a5c10;
+  }
+  .bar button:hover{background:#eadfbf;}
+
+  /* 两张主卡 */
+  .cards{display:grid;grid-template-columns:1.15fr .85fr;gap:18px;}
+  .card{
+    background:var(--paper2);border-radius:18px;box-shadow:var(--shadow);
+    padding:22px;position:relative;overflow:hidden;
+  }
+  .card.teach{border-top:5px solid var(--red);}
+  .card.stud{border-top:5px solid var(--blue);}
+  .card h2{
+    font-family:"KaiTi",serif;font-size:22px;color:var(--red-deep);
+    display:flex;align-items:center;gap:9px;margin-bottom:6px;
+  }
+  .card.stud h2{color:var(--blue);}
+  .card .desc{font-size:12.5px;color:#8a6d3b;line-height:1.75;margin-bottom:16px;}
+
+  /* 教师入口按钮 */
+  .entry{
+    display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;
+    border:2px solid #ece3ce;border-radius:13px;padding:13px 15px;margin-bottom:10px;
+    background:#fff;transition:.16s;
+  }
+  .entry:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:0 8px 20px rgba(140,20,24,.13);}
+  .entry .ico{font-size:22px;flex:none;width:34px;text-align:center;}
+  .entry .tt{font-size:15px;font-weight:800;color:var(--red-deep);}
+  .entry .dd{font-size:11.5px;color:#8a6d3b;margin-top:2px;line-height:1.55;}
+  .entry .go{margin-left:auto;font-size:12px;color:#c9a45c;font-weight:800;}
+
+  /* 学生二维码 */
+  .qrbox{text-align:center;}
+  .qrbox .frame{
+    width:206px;height:206px;margin:0 auto 10px;background:#fff;border-radius:14px;
+    padding:9px;border:2px solid #e6dcc8;display:flex;align-items:center;justify-content:center;
+  }
+  .qrbox img,.qrbox canvas{width:188px;height:188px;display:block;}
+  .qrbox .fail{font-size:11.5px;color:#8a6d3b;line-height:1.6;padding:8px;}
+  .linkrow{
+    display:flex;gap:7px;align-items:center;background:#f7f2e6;border:1px dashed var(--gold);
+    border-radius:10px;padding:9px 11px;margin-top:12px;
+  }
+  .linkrow code{
+    font-family:ui-monospace,Consolas,monospace;font-size:11.5px;color:#5b4b33;
+    flex:1;word-break:break-all;text-align:left;line-height:1.5;
+  }
+  .linkrow button{
+    font-family:inherit;cursor:pointer;border:none;border-radius:8px;flex:none;
+    font-size:11.5px;font-weight:800;padding:7px 10px;background:var(--red);color:#fff;
+  }
+  .linkrow button.copied{background:var(--green);}
+
+  /* 底部提示 */
+  .notes{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+  .note{background:rgba(255,253,247,.72);border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.8;color:#5b4b33;border:1px solid #ece3ce;}
+  .note b{color:var(--red-deep);}
+  .note .k{font-size:12px;font-weight:800;color:#8a6d3b;display:block;margin-bottom:5px;letter-spacing:.5px;}
+  footer{text-align:center;font-size:11.5px;color:#a89272;margin-top:26px;line-height:1.9;}
+
+  @media(max-width:780px){
+    .cards{grid-template-columns:1fr;}
+    h1{font-size:25px;}
+    .bar input{width:100%;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="seal">情景<br>模拟</div>
+    <h1>思政课 · 情景模拟课堂</h1>
+    <div class="sub">老师从这里开课，学生扫码进课堂</div>
+  </header>
+
+  <div class="bar">
+    <span class="dot" id="dot"></span>
+    <div class="st" id="status">正在连接课堂服务器…</div>
+    <input id="baseInput" type="text" placeholder="课堂服务器地址，例：https://xxx.up.railway.app">
+    <button onclick="saveBase()">保存地址</button>
+  </div>
+
+  <div class="cards">
+    <!-- 教师 -->
+    <div class="card teach">
+      <h2>🧑‍🏫 老师这边</h2>
+      <div class="desc">三个后台入口，都需要口令。第一次点会先问口令，输入后 30 天内不用再输。</div>
+
+      <a class="entry" id="lnkTeacher" href="#" target="_blank" rel="noopener">
+        <span class="ico">🎛</span>
+        <span>
+          <span class="tt">课堂控制台</span>
+          <span class="dd">投屏用：实时看 4 组票数、控环节节奏、公布结果</span>
+        </span>
+        <span class="go">进入 →</span>
+      </a>
+
+      <a class="entry" id="lnkHub" href="#" target="_blank" rel="noopener">
+        <span class="ico">🏛</span>
+        <span>
+          <span class="tt">情景大厅</span>
+          <span class="dd">所有情景的卡片墙，选一个设为「本节课用」</span>
+        </span>
+        <span class="go">进入 →</span>
+      </a>
+
+      <a class="entry" id="lnkEditor" href="#" target="_blank" rel="noopener">
+        <span class="ico">✏️</span>
+        <span>
+          <span class="tt">情景编辑器</span>
+          <span class="dd">新建情景、导入 Word/PPT 自动生成草稿、加图片视频</span>
+        </span>
+        <span class="go">进入 →</span>
+      </a>
+
+      <a class="entry" id="lnkPlay" href="#" target="_blank" rel="noopener">
+        <span class="ico">🎬</span>
+        <span>
+          <span class="tt">单人闯关（备课自测）</span>
+          <span class="dd">自己先走一遍，看结局和复盘，确认答案对不对</span>
+        </span>
+        <span class="go">进入 →</span>
+      </a>
+    </div>
+
+    <!-- 学生 -->
+    <div class="card stud">
+      <h2>📱 学生这边</h2>
+      <div class="desc">学生扫这个码，只进「学生端」：看不到情景列表，也进不了后台。<b>不需要口令。</b></div>
+
+      <div class="qrbox">
+        <div class="frame" id="qrFrame">
+          <img id="qrImg" alt="学生入口二维码">
+        </div>
+        <div style="font-size:12px;color:#8a6d3b;" id="qrHint">手机扫一扫，输入名字就能进</div>
+      </div>
+
+      <div class="linkrow">
+        <code id="studentUrl">—</code>
+        <button id="copyBtn" onclick="copyUrl()">复制</button>
+      </div>
+      <a class="entry" id="lnkStudent" href="#" target="_blank" rel="noopener" style="margin-top:12px;">
+        <span class="ico">↗</span>
+        <span>
+          <span class="tt">在本机打开学生端</span>
+          <span class="dd">不用手机扫，也能预览学生看到的样子</span>
+        </span>
+        <span class="go">打开 →</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <span class="k">课堂三步</span>
+      <b>①</b> 情景大厅里选一个情景，点「课堂用」；<b>②</b> 控制台点「开始上课」，学生扫码进；<b>③</b> 每幕「开放投票 → 结束本轮」，大屏立刻标出正确解，学生手机上同步看到自己这一票的结果。
+    </div>
+    <div class="note">
+      <span class="k">加新情景</span>
+      在「情景编辑器」里新建，或者直接<b>上传 Word / PPT</b>，自动抽文字生成幕骨架，再逐幕补正确解和讲评。<b>存完立刻生效，不用重新部署。</b>
+    </div>
+    <div class="note">
+      <span class="k">换服务器了？</span>
+      把新地址填到上面那栏点「保存地址」，二维码和所有入口会一起换掉，这个链接不用改。
+    </div>
+  </div>
+
+  <footer>
+    课堂口令默认为 <b>1949</b>（可用环境变量 ADMIN_PIN 修改）· 学生端不需要口令<br>
+    本页只做入口，不存任何数据；课堂数据在服务器上，重启即清空。
+  </footer>
+</div>
+
+<script>
+(function(){
+  var KEY = "cls_entry_base";
+  var qs = new URLSearchParams(location.search);
+
+  /* 如果本页就是从课堂服务器上打开的（/entry），默认就用它自己 */
+  function selfBase(){
+    var h = location.hostname;
+    if(!h) return "";
+    if(/workbuddy\.(link|cn)$/i.test(h) || /^space\./i.test(h)) return "";
+    return location.origin;
+  }
+
+  var base = norm(qs.get("s") || localStorage.getItem(KEY) || selfBase());
+
+  function norm(u){
+    u = String(u || "").trim().replace(/\/+$/, "");
+    if(!u) return "";
+    if(!/^https?:\/\//i.test(u)) u = "https://" + u;
+    return u;
+  }
+
+  var el = {
+    input: document.getElementById("baseInput"),
+    dot: document.getElementById("dot"),
+    status: document.getElementById("status"),
+    sUrl: document.getElementById("studentUrl"),
+    qr: document.getElementById("qrImg"),
+    qrFrame: document.getElementById("qrFrame"),
+    qrHint: document.getElementById("qrHint")
+  };
+
+  function apply(){
+    el.input.value = base;
+    var ids = ["lnkTeacher", "lnkHub", "lnkEditor", "lnkPlay", "lnkStudent"];
+
+    /* 还没配地址：所有入口都先按住，把注意力引到输入框 */
+    if(!base){
+      ids.forEach(function(k){
+        var a = document.getElementById(k);
+        if(!a) return;
+        a.href = "#";
+        a.onclick = function(e){
+          e.preventDefault();
+          el.input.focus();
+          el.input.style.borderColor = "#b81c22";
+          el.status.innerHTML = "请先填写<b>课堂服务器地址</b>（部署平台给你的 https://… 网址），再点「保存地址」。";
+          el.dot.className = "dot off";
+        };
+      });
+      el.sUrl.textContent = "（未设置）";
+      el.qrFrame.innerHTML = '<div class="fail">填上课堂地址后，这里会出现学生扫码的二维码。</div>';
+      el.qrHint.textContent = "先填地址";
+      el.dot.className = "dot";
+      el.status.innerHTML = "第一次使用：请先填写<b>课堂服务器地址</b>（部署平台给你的 https://… 网址），再点「保存地址」。";
+      return;
+    }
+
+    ids.forEach(function(k){
+      var a = document.getElementById(k);
+      if(a) a.onclick = null;
+    });
+    var links = {
+      lnkTeacher: base + "/teacher",
+      lnkHub: base + "/",
+      lnkEditor: base + "/editor",
+      lnkPlay: base + "/play",
+      lnkStudent: base + "/s"
+    };
+    Object.keys(links).forEach(function(k){
+      var a = document.getElementById(k);
+      if(a) a.href = links[k];
+    });
+    el.sUrl.textContent = base + "/s";
+    renderQR();
+    check();
+  }
+
+  /* 二维码：优先用接口，失败换备用，再失败就提示直接输网址 */
+  function renderQR(){
+    var url = base + "/s";
+    var providers = [
+      "https://api.qrserver.com/v1/create-qr-code/?size=380x380&margin=10&data=",
+      "https://quickchart.io/qr?size=380&margin=2&text="
+    ];
+    var i = 0;
+    var img = document.createElement("img");
+    img.alt = "学生入口二维码";
+    img.onerror = function(){
+      i++;
+      if(i < providers.length){ img.src = providers[i] + encodeURIComponent(url); return; }
+      el.qrFrame.innerHTML = '<div class="fail">二维码接口暂时连不上。<br>请让学生直接在浏览器里输入右边这个网址，或者点「复制」发到班级群。</div>';
+      el.qrHint.textContent = "二维码生成失败，改用网址";
+    };
+    img.src = providers[0] + encodeURIComponent(url);
+    el.qrFrame.innerHTML = "";
+    el.qrFrame.appendChild(img);
+    el.qrHint.textContent = "手机扫一扫，输入名字就能进";
+  }
+
+  /* 探一下服务器是否活着，并显示当前是哪一课 */
+  function check(){
+    el.dot.className = "dot";
+    el.status.textContent = "正在连接 " + base + " …";
+    var ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+    var timer = setTimeout(function(){ if(ctl) ctl.abort(); }, 8000);
+    fetch(base + "/api/meta", { cache: "no-store", signal: ctl ? ctl.signal : undefined })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        clearTimeout(timer);
+        el.dot.className = "dot on";
+        var g = d.game || {};
+        el.status.innerHTML = "已连接。<b>" + esc(g.name || "课堂") + "</b>" +
+          (g.subtitle ? "（" + esc(g.subtitle) + "）" : "") +
+          " · 共 " + (d.totalStages || 0) + " 幕";
+      })
+      .catch(function(){
+        clearTimeout(timer);
+        el.dot.className = "dot off";
+        el.status.innerHTML = "连不上这个地址。检查一下域名有没有写错，或者服务器是不是还在启动中。";
+      });
+  }
+
+  function esc(s){
+    return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+    });
+  }
+
+  window.saveBase = function(){
+    var v = norm(el.input.value);
+    if(!v){ el.status.textContent = "地址不能为空。"; el.dot.className = "dot off"; return; }
+    base = v;
+    el.input.style.borderColor = "";
+    localStorage.setItem(KEY, base);
+    apply();
+  };
+
+  window.copyUrl = function(){
+    var t = base + "/s";
+    var btn = document.getElementById("copyBtn");
+    function done(){
+      btn.textContent = "已复制";
+      btn.className = "copied";
+      setTimeout(function(){ btn.textContent = "复制"; btn.className = ""; }, 1800);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else fallback();
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); done(); } catch(e){ alert("请手动复制：" + t); }
+      document.body.removeChild(ta);
+    }
+  };
+
+  el.input.addEventListener("keydown", function(e){ if(e.key === "Enter") saveBase(); });
+  apply();
+})();
+</script>
+</body>
+</html>

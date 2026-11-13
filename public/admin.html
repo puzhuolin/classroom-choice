@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>教师入口</title>
+<style>
+  :root{--red:#b81c22;--red-deep:#8c1418;--gold:#d4af37;--ink:#2b2622;--paper:#f6efe0;--paper2:#fffdf7;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 20% 10%,rgba(212,175,55,.18),transparent 45%),radial-gradient(circle at 85% 90%,rgba(184,28,34,.14),transparent 45%),var(--paper);padding:20px;}
+  .box{background:var(--paper2);border-radius:20px;padding:34px 30px;box-shadow:0 16px 44px rgba(80,20,20,.18);max-width:400px;width:100%;text-align:center;border:3px solid var(--gold);}
+  .seal{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--red),var(--red-deep));color:#f2d57e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin:0 auto 14px;border:2px solid var(--gold);transform:rotate(-4deg);line-height:1.05;}
+  h1{font-family:"KaiTi",serif;font-size:24px;color:var(--red-deep);letter-spacing:2px;margin-bottom:8px;}
+  p{font-size:13px;color:#8a6d3b;line-height:1.8;margin-bottom:18px;}
+  input{width:100%;padding:14px 16px;border:2px solid #e6d8bb;border-radius:12px;font-size:20px;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;background:#fff;}
+  input:focus{border-color:var(--red);}
+  button{width:100%;margin-top:14px;background:var(--red);color:#fff;border:none;border-radius:12px;padding:14px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;}
+  button:hover{background:var(--red-deep);}
+  .err{color:var(--red);font-size:13px;font-weight:700;min-height:20px;margin-top:10px;}
+  .foot{font-size:11.5px;color:#a08a72;margin-top:16px;line-height:1.7;}
+  a{color:var(--red);font-size:12.5px;text-decoration:none;}
+</style>
+</head>
+<body>
+  <div class="box">
+    <div class="seal">教师<br>入口</div>
+    <h1>后台口令</h1>
+    <p>大厅、编辑器和课堂控制台需要口令。<br>学生扫码走的是学生端，不需要口令。</p>
+    <input id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="······" autocomplete="off">
+    <button onclick="login()">进入</button>
+    <div class="err" id="err"></div>
+    <div class="foot">忘记口令？服务器启动日志里有提示；<br>也可用环境变量 ADMIN_PIN 指定，设为 off 可关闭这把锁。</div>
+  </div>
+<script>
+function target(){
+  const n = new URLSearchParams(location.search).get("next");
+  return n && n.charAt(0) === "/" ? n : "/";
+}
+async function login(){
+  const pin = document.getElementById("pin").value.trim();
+  if(!pin){ document.getElementById("pin").focus(); return; }
+  const r = await fetch("/api/admin/login", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({pin})});
+  const d = await r.json().catch(()=>({}));
+  if(d.ok){ location.href = target(); }
+  else{ document.getElementById("err").textContent = d.error || "口令不对，请重试"; document.getElementById("pin").select(); }
+}
+document.getElementById("pin").addEventListener("keydown", function(e){ if(e.key === "Enter") login(); });
+document.getElementById("pin").focus();
+</script>
+</body>
+</html>

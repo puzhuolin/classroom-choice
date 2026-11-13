@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情景模拟 · 选择游戏</title>
+<style>
+  :root{--red:#b81c22;--red-deep:#8c1418;--gold:#d4af37;--gold-l:#f2d57e;--ink:#2b2622;--paper:#f6efe0;--paper2:#fffdf7;--green:#1f7a4d;--blue:#1f5fa8;--shadow:0 8px 26px rgba(80,20,20,.14);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 6%,rgba(212,175,55,.16),transparent 42%),radial-gradient(circle at 92% 94%,rgba(184,28,34,.12),transparent 46%),var(--paper);min-height:100vh;}
+  .wrap{max-width:1100px;margin:0 auto;padding:26px 18px 50px;}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px;}
+  .brand{display:flex;align-items:center;gap:14px;}
+  .seal{width:54px;height:54px;border-radius:13px;background:linear-gradient(135deg,var(--red),var(--red-deep));color:var(--gold-l);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;text-align:center;line-height:1.05;border:2px solid var(--gold);transform:rotate(-4deg);}
+  h1{font-family:"KaiTi","STKaiti",serif;font-size:27px;color:var(--red-deep);letter-spacing:2px;}
+  .sub{font-size:13px;color:#8a6d3b;margin-top:3px;}
+  .acts{display:flex;gap:8px;flex-wrap:wrap;}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:11px;font-size:14px;font-weight:700;padding:11px 18px;transition:.15s;}
+  .b-red{background:var(--red);color:#fff;box-shadow:0 5px 14px rgba(184,28,34,.28);}
+  .b-red:hover{background:var(--red-deep);}
+  .b-ghost{background:#fff;color:var(--red);border:2px solid var(--red);}
+  .b-gold{background:var(--gold);color:#3a2c08;}
+  .b-plain{background:#fff;color:#7a5c10;border:2px solid #e0d2b0;}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:6px;}
+  .sc{background:var(--paper2);border-radius:16px;padding:20px;box-shadow:var(--shadow);position:relative;overflow:hidden;border-top:5px solid var(--red);display:flex;flex-direction:column;transition:.18s;}
+  .sc:hover{transform:translateY(-3px);box-shadow:0 14px 34px rgba(80,20,20,.18);}
+  .sc.judge{border-top-color:var(--red);} .sc.attrs{border-top-color:var(--blue);}
+  .sc .em{font-size:34px;line-height:1;}
+  .sc .cover{margin:-20px -20px 14px;height:132px;overflow:hidden;background:#e8dcc2;position:relative;}
+  .sc .cover img{width:100%;height:132px;object-fit:cover;display:block;}
+  .sc .cover .cap{position:absolute;left:0;right:0;bottom:0;font-size:11.5px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.6));padding:16px 12px 7px;}
+  .sc .em.big{position:absolute;right:10px;top:8px;font-size:26px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4));}  .sc .tt{font-family:"KaiTi",serif;font-size:21px;font-weight:800;color:var(--red-deep);margin:8px 0 4px;}
+  .sc .st{font-size:12.5px;color:#8a6d3b;line-height:1.6;min-height:34px;}
+  .sc .meta{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 14px;}
+  .chip{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:20px;background:#f2ead6;color:#7a5c10;}
+  .chip.mode{background:#fdeaea;color:var(--red);}
+  .sc.attrs .chip.mode{background:#e8f0fa;color:var(--blue);}
+  .sc .row{display:flex;gap:8px;margin-top:auto;}
+  .sc .row button{flex:1;padding:10px 8px;font-size:13.5px;}
+  .newsc{border:3px dashed #dccdaa;background:transparent;box-shadow:none;align-items:center;justify-content:center;text-align:center;cursor:pointer;min-height:210px;border-top:3px dashed #dccdaa;}
+  .newsc:hover{border-color:var(--red);background:#fffaf3;}
+  .newsc .plus{font-size:40px;color:#cbb894;}
+  .newsc .t{font-weight:800;color:#8a6d3b;margin-top:8px;}
+  .newsc .d{font-size:12px;color:#a89272;margin-top:4px;}
+
+  .panel{background:var(--paper2);border-radius:16px;padding:20px;box-shadow:var(--shadow);margin-top:22px;display:grid;grid-template-columns:210px 1fr;gap:22px;align-items:center;}
+  .panel img{width:190px;height:190px;background:#fff;border-radius:12px;padding:6px;}
+  .panel h3{font-family:"KaiTi",serif;color:var(--red-deep);font-size:19px;margin-bottom:8px;}
+  .panel p{font-size:13px;line-height:1.85;color:#5b4b33;}
+  .panel .url{font-size:11.5px;color:#8a6d3b;word-break:break-all;margin-top:8px;}
+  .tip{font-size:12px;color:#a07b22;background:#fff7e6;border:1px dashed var(--gold);border-radius:10px;padding:10px 12px;margin-top:10px;line-height:1.7;}
+  @media(max-width:760px){.panel{grid-template-columns:1fr;text-align:center;} .panel img{margin:0 auto;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="seal">情景<br>模拟</div>
+      <div>
+        <h1>情景模拟 · 选择游戏</h1>
+        <div class="sub">选一个情景进入。新情景在「情景编辑器」里加，存完立刻能用，不用重新部署。</div>
+      </div>
+    </div>
+    <div class="acts">
+      <button class="b-red" onclick="location.href='/editor'">＋ 新建情景</button>
+      <button class="b-plain" onclick="location.href='/api/export'">⬇ 导出备份</button>
+      <button class="b-plain" onclick="importBackup()">⬆ 导入恢复</button>
+    </div>
+  </header>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="panel">
+    <img id="qr" alt="扫码进入">
+    <div>
+      <h3>📱 学生扫这个码进课堂</h3>
+      <p>学生扫到的只有<b>学生端</b>：他看到的是你现在指定的那个情景，等你「开始上课」才能作答。他看不到情景列表，也进不了这里和编辑器。</p>
+      <p style="margin-top:6px;color:#8a6d3b;">要换情景：对某个卡点「课堂用」，或在教师控制台左上角的下拉里切换。</p>
+      <div class="url" id="url"></div>
+      <div class="tip">新增情景后学生刷新一下就能看到新内容，不需要你重新部署。</div>
+    </div>
+  </div>
+</div>
+
+<script>
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+(async function(){
+  const url = location.origin + "/s";
+  document.getElementById("url").textContent = url;
+  const q = encodeURIComponent(url);
+  const img = document.getElementById("qr");
+  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=8&data=" + q;
+  img.onerror = function(){ this.onerror=null; this.src = "https://quickchart.io/qr?size=220&text=" + q; };
+
+  await refresh();
+})();
+
+async function refresh(){
+  const r = await fetch("/api/scenarios");
+  const d = await r.json();
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  (d.scenarios||[]).forEach(function(s){
+    const el = document.createElement("div");
+    el.className = "sc " + (s.mode === "attrs" ? "attrs" : "judge");
+    el.innerHTML =
+      (s.cover && s.cover.url
+        ? '<div class="cover"><img src="' + esc(s.cover.url) + '" alt="" loading="lazy">' +
+          '<div class="em big">' + esc(s.emoji || "🎮") + '</div>' +
+          (s.cover.caption ? '<div class="cap">' + esc(s.cover.caption) + '</div>' : '') + '</div>'
+        : '<div class="em">' + esc(s.emoji || "🎮") + '</div>') +
+      '<div class="tt">' + esc(s.title) + '</div>' +
+      '<div class="st">' + esc(s.subtitle || "") + '</div>' +
+      '<div class="meta">' +
+        '<span class="chip mode">' + (s.mode === "attrs" ? "属性养成" : "判断抉择") + '</span>' +
+        '<span class="chip">' + s.stages + ' 幕</span>' +
+      '</div>' +
+      '<div class="row">' +
+        '<button class="b-red" onclick="location.href=\'/play?s=' + encodeURIComponent(s.id) + '\'">开始闯关</button>' +
+        '<button class="b-ghost" onclick="location.href=\'/teacher?s=' + encodeURIComponent(s.id) + '\'">课堂用</button>' +
+        '<button class="b-plain" onclick="location.href=\'/editor?id=' + encodeURIComponent(s.id) + '\'">编辑</button>' +
+      '</div>';
+    grid.appendChild(el);
+  });
+
+  const add = document.createElement("div");
+  add.className = "sc newsc";
+  add.onclick = function(){ location.href = "/editor"; };
+  add.innerHTML = '<div class="plus">＋</div><div class="t">新建情景</div><div class="d">填标题、写几幕、标正确解<br>保存后立刻出现在这里</div>';
+  grid.appendChild(add);
+}
+
+function importBackup(){
+  const inp = document.createElement("input");
+  inp.type = "file";
+  inp.accept = ".json,application/json";
+  inp.onchange = function(){
+    const f = inp.files[0];
+    if(!f) return;
+    const fr = new FileReader();
+    fr.onload = async function(){
+      let data;
+      try{ data = JSON.parse(fr.result); }catch(e){ alert("文件不是合法的 JSON"); return; }
+      const list = Array.isArray(data) ? data : data.scenarios;
+      if(!Array.isArray(list)){ alert("文件里没有情景数组"); return; }
+      if(!confirm("导入 " + list.length + " 个情景？\n确定 = 按 id 合并（同 id 覆盖）\n取消 = 放弃")) return;
+      const r = await fetch("/api/import", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({data:list, mode:"merge"})});
+      const j = await r.json();
+      if(j.ok){ alert("导入成功：" + j.count + " 个情景" + (j.skipped && j.skipped.length ? "\n跳过：" + j.skipped.join("；") : "")); refresh(); }
+      else alert("导入失败：\n" + (j.error||[]).join("\n"));
+    };
+    fr.readAsText(f);
+  };
+  inp.click();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>学生端</title>
+<style>
+  :root{--red:#b81c22;--red-deep:#8c1418;--gold:#d4af37;--gold-l:#f2d57e;--ink:#2b2622;--paper:#f6efe0;--paper2:#fffdf7;--green:#1f7a4d;--blue:#1f5fa8;--orange:#c07a12;--shadow:0 8px 24px rgba(80,20,20,.14);}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;color:var(--ink);
+    background:radial-gradient(circle at 20% 0%,rgba(212,175,55,.16),transparent 40%),var(--paper);min-height:100vh;}
+  .wrap{max-width:520px;margin:0 auto;padding:16px 14px 40px;}
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .who{display:flex;align-items:center;gap:9px;}
+  .badge-g{font-size:12.5px;font-weight:800;color:#fff;background:var(--red);padding:5px 11px;border-radius:20px;}
+  .badge-g.g2{background:var(--blue);} .badge-g.g3{background:var(--green);} .badge-g.g4{background:var(--orange);}
+  .nm{font-size:14.5px;font-weight:700;color:var(--red-deep);}
+  .live{font-size:11px;color:#8a6d3b;display:flex;align-items:center;gap:5px;}
+  .dotl{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 1.2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+  .card{background:var(--paper2);border-radius:16px;padding:18px;box-shadow:var(--shadow);}
+  .card + .card{margin-top:12px;}
+  .hero{text-align:center;padding:26px 18px;}
+  .hero .em{font-size:40px;line-height:1;margin-bottom:8px;}
+  .hero .ttl{font-size:21px;font-weight:800;color:var(--red-deep);letter-spacing:1px;margin-bottom:6px;font-family:"KaiTi",serif;}
+  .hero .desc{font-size:13px;color:#8a6d3b;line-height:1.75;}
+  .field{margin:16px 0 10px;}
+  input{width:100%;padding:14px 16px;border:2px solid #e6d8bb;border-radius:12px;font-size:17px;font-family:inherit;outline:none;text-align:center;}
+  input:focus{border-color:var(--red);}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;font-size:16px;font-weight:700;padding:14px 18px;transition:.15s;width:100%;}
+  .b-red{background:var(--red);color:#fff;box-shadow:0 6px 16px rgba(184,28,34,.3);}
+  .b-red:active{transform:scale(.98);}
+  .stage-tag{font-size:12.5px;color:#a07b22;margin-bottom:6px;}
+  .q{font-size:18px;font-weight:800;color:var(--red-deep);line-height:1.55;margin-bottom:14px;}
+  .opts{display:grid;gap:11px;}
+  .opt{position:relative;background:#fff;border:2px solid #e6d8bb;border-radius:14px;padding:14px 15px;text-align:left;font-size:14.5px;line-height:1.6;overflow:hidden;transition:.15s;width:100%;color:var(--ink);display:flex;gap:10px;align-items:flex-start;}
+  .opt .mk{display:inline-flex;flex:0 0 26px;width:26px;height:26px;border-radius:50%;background:#efe4cd;color:#8a6d3b;align-items:center;justify-content:center;font-weight:800;font-size:13px;margin-top:1px;}
+  .opt .txt{flex:1;}
+  .opt.sel{border-color:var(--red);background:#fff4f4;}
+  .opt.sel .mk{background:var(--red);color:#fff;}
+  .opt .pct{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;font-weight:700;color:var(--red);}
+  .opt .bar{position:absolute;left:0;top:0;bottom:0;background:rgba(184,28,34,.12);width:0;transition:width .5s;}
+  .opt .rl{position:relative;flex:1;padding-right:46px;}
+  .waiting{text-align:center;padding:24px 8px;color:#8a6d3b;}
+  .waiting .big{font-size:38px;margin-bottom:10px;}
+  .waiting p{font-size:14px;line-height:1.8;}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 20px;border-radius:24px;font-size:14px;opacity:0;transition:.3s;pointer-events:none;z-index:50;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* 结果卡 */
+  .res{border-radius:16px;padding:16px 18px;margin-top:12px;border:2px solid;position:relative;}
+  .res.ok{background:#f1fbf5;border-color:#b9e4cc;}
+  .res.bad{background:#fdf3f3;border-color:#f0cfcf;}
+  .res .rh{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:1px;margin-bottom:8px;}
+  .res.ok .rh{color:var(--green);} .res.bad .rh{color:var(--red);}
+  .res .rt{font-size:17px;font-weight:800;color:var(--red-deep);line-height:1.5;margin-bottom:8px;font-family:"KaiTi",serif;}
+  .res .rx{font-size:14px;line-height:1.85;color:#3d342c;}
+  .res .an{margin-top:10px;background:#fff7e6;border:1px dashed var(--gold);border-radius:10px;padding:11px 13px;font-size:13px;line-height:1.8;color:#5c4a20;}
+  .res .an b{color:var(--red-deep);}
+  .res .mypair{margin-top:10px;font-size:12.5px;line-height:1.7;padding:9px 12px;border-radius:10px;background:#fff;}
+  .res .mypair b{color:var(--red-deep);}
+
+  /* 复盘 */
+  .scoreline{display:flex;align-items:center;gap:12px;margin:12px 0 4px;}
+  .scoreline .big{font-family:"KaiTi",serif;font-size:44px;font-weight:800;color:var(--red);line-height:1;}
+  .scoreline .lv{font-size:12px;font-weight:800;color:#fff;border-radius:20px;padding:4px 11px;}
+  .scoreline .of{font-size:12px;color:#8a6d3b;}
+  .h3{font-size:14px;font-weight:800;color:var(--red-deep);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
+  .item{display:flex;gap:8px;padding:9px 0;border-bottom:1px dashed #e8dcc2;font-size:13px;line-height:1.65;}
+  .item:last-child{border-bottom:none;}
+  .item .n{width:52px;flex-shrink:0;color:var(--gold);font-weight:800;font-size:12px;}
+  .item .c{flex:1;color:#4a4038;}
+  .item .m{font-weight:800;flex-shrink:0;}
+  .m.ok{color:var(--green);} .m.bad{color:var(--red);} .m.na{color:#a08a66;}
+  .fix{background:#fff7e6;border:1px dashed var(--gold);border-radius:12px;padding:13px 14px;margin-bottom:10px;}
+  .fix .ft{font-size:13.5px;font-weight:800;color:var(--red-deep);margin-bottom:6px;}
+  .fix .fx{font-size:13px;line-height:1.8;color:#4a4038;}
+  .fix .fa{font-size:12.5px;line-height:1.8;color:#8a5a1a;margin-top:6px;padding-top:6px;border-top:1px dashed #e6d3a8;}
+  .pairline{font-size:13px;line-height:1.7;padding:9px 0;border-bottom:1px dashed #e8dcc2;}
+  .pairline:last-child{border-bottom:none;}
+  .pairline b{color:var(--red-deep);}
+  .p-ok{color:var(--green);font-weight:800;} .p-bad{color:var(--red);font-weight:800;} .p-none{color:#a08a66;font-weight:600;}
+  .tagline{background:#f3f7fb;border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.85;color:#33506b;margin-bottom:8px;}
+  .tagline b{color:var(--blue);}
+  .qlist{counter-reset:q;list-style:none;}
+  .qlist li{counter-increment:q;position:relative;padding-left:26px;font-size:13px;line-height:1.8;color:#4a4038;margin-bottom:8px;}
+  .qlist li::before{content:counter(q);position:absolute;left:0;top:2px;width:18px;height:18px;border-radius:50%;background:var(--red);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;}
+  .media{width:100%;border-radius:12px;margin-bottom:12px;display:block;}
+  .coverb{position:relative;border-radius:12px;overflow:hidden;margin-bottom:12px;background:#e8dcc2;}
+  .coverb img{width:100%;height:148px;object-fit:cover;display:block;}
+  .coverb .cb-cap{position:absolute;left:0;right:0;bottom:0;font-size:11.5px;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.62));padding:18px 10px 6px;}
+  .subtip{font-size:11.5px;color:#a08a66;text-align:center;margin-top:10px;line-height:1.7;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top" id="top" style="display:none;">
+    <div class="who"><span class="badge-g" id="gBadge">第1组</span><span class="nm" id="uName">同学</span></div>
+    <div class="live"><span class="dotl"></span>实时</div>
+  </div>
+
+  <div class="card hero" id="joinView">
+    <div class="em" id="heroEm">🎮</div>
+    <div class="ttl" id="heroTitle">情 景 模 拟</div>
+    <div class="desc" id="heroDesc">输入名字进入课堂，<br>老师会带你们一起走这个情景。</div>
+    <div class="field"><input id="nameInput" maxlength="12" placeholder="输入你的名字" autocomplete="off"></div>
+    <button class="b-red" onclick="join()">进 入 课 堂</button>
+  </div>
+
+  <div id="view" style="display:none;"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SID_KEY = "cls_sid";
+let sid = localStorage.getItem(SID_KEY) || null;
+let joined = false;
+let ticking = false;
+let renderKey = "";
+
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove("show"),1600);}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+/* ---------- 首屏按当前情景显示 ---------- */
+(async function(){
+  try{
+    const d = await (await fetch("/api/meta")).json();
+    if(d && d.game){
+      document.title = d.game.name + " · 学生端";
+      document.getElementById("heroEm").textContent = d.game.emoji || "🎮";
+      document.getElementById("heroTitle").textContent = d.game.name;
+      document.getElementById("heroDesc").innerHTML = esc(d.game.subtitle || "") + "<br>输入名字进入课堂。";
+    }
+  }catch(e){}
+})();
+
+async function join(){
+  const inp = document.getElementById("nameInput");
+  const name = (inp.value||"").trim();
+  if(!name){ inp.style.borderColor="#b81c22"; inp.focus(); return; }
+  try{
+    const r = await fetch("/api/join", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({name})});
+    const d = await r.json();
+    if(d.ok){
+      sid = d.id; localStorage.setItem(SID_KEY, sid);
+      joined = true; renderKey = "";
+      document.getElementById("joinView").style.display="none";
+      document.getElementById("view").style.display="block";
+      document.getElementById("top").style.display="flex";
+      poll();
+    }else{ toast(d.error || "加入失败，请重试"); }
+  }catch(e){ toast("网络异常，请重试"); }
+}
+
+async function answer(choice){
+  if(!sid) return;
+  try{
+    const r = await fetch("/api/answer", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({id:sid, choice})});
+    const d = await r.json();
+    if(d.ok){ toast("已提交，可修改"); renderKey=""; poll(); }
+    else if(d.error==="closed"){ toast("本轮投票已结束"); }
+  }catch(e){ toast("提交失败，请重试"); }
+}
+
+/* ---------- 主渲染 ---------- */
+function renderMe(d){
+  if(!d.ok){
+    localStorage.removeItem(SID_KEY); sid=null; joined=false; renderKey="";
+    document.getElementById("top").style.display="none";
+    document.getElementById("view").style.display="none";
+    document.getElementById("joinView").style.display="block";
+    return;
+  }
+  document.getElementById("gBadge").textContent = d.groupName;
+  const gi = d.group+1;
+  document.getElementById("gBadge").className = "badge-g" + (gi>1?(" g"+gi):"");
+  document.getElementById("uName").textContent = d.name;
+
+  // 内容没变就不重绘（避免滚动位置和动画被打断）
+  const key = [d.phase, d.stageIndex, d.myChoice, JSON.stringify(d.counts), d.review ? "done" : ""].join("|");
+  if(key === renderKey) return;
+  renderKey = key;
+
+  document.getElementById("view").innerHTML = viewHtml(d);
+  if(d.phase === "closed" || d.phase === "done") window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function viewHtml(d){
+  const sc = d.scenario || {};
+  const phase = d.phase;
+
+  /* 未开始：只显示当前情景与等待，不提供任何"选情景"入口 */
+  if(phase === "idle"){
+    return '<div class="card">' +
+      '<div class="stage-tag">当前情景</div>' +
+      '<div class="q" style="margin-bottom:10px;">' + esc(sc.emoji ? sc.emoji + " " : "") + esc(sc.title || "") + '</div>' +
+      coverHtml(sc.cover) +
+      (sc.subtitle ? '<div style="font-size:13px;color:#8a6d3b;margin-bottom:10px;">' + esc(sc.subtitle) + '</div>' : '') +
+      (sc.lead ? '<div style="font-size:14px;line-height:1.9;color:#4a4038;margin-bottom:12px;">' + esc(sc.lead) + '</div>' : '') +
+      (sc.roleName ? '<div style="background:#fff7e6;border:1px dashed var(--gold);border-radius:11px;padding:12px 14px;font-size:13.5px;line-height:1.8;color:#5c4a20;margin-bottom:12px;"><b style="color:var(--red-deep)">你的角色：</b>' + esc(sc.roleName) + '</div>' : '') +
+      '<div class="waiting" style="padding:14px 0 4px;"><div class="big">⏳</div><p>你已被分到 <b>' + esc(d.groupName) + '</b>。<br>等老师开始第一个环节…</p></div>' +
+      '</div>';
+  }
+
+  if(phase === "done" && d.review){ return reviewHtml(d); }
+
+  if(phase === "open" && d.stage){
+    const media = (d.stageIndex === 0 ? coverHtml(sc.cover) : "") + (d.stage.media && d.stage.media.url ? mediaHtml(d.stage.media) : "");
+    let h = '<div class="card">' +
+      '<div class="stage-tag">第 ' + (d.stageIndex+1) + ' 环节 / ' + d.totalStages + ' · ' + esc(d.stage.title) + '</div>' +
+      media +
+      '<div class="q">' + esc(d.stage.q) + '</div><div class="opts">';
+    d.stage.options.forEach(function(o,i){
+      const sel = d.myChoice === i;
+      h += '<button class="opt' + (sel?' sel':'') + '" onclick="answer(' + i + ')">' +
+        '<span class="mk">' + ["A","B","C","D","E"][i] + '</span><span class="txt">' + esc(o.label) + '</span></button>';
+    });
+    h += '</div>';
+    if(d.myChoice != null) h += '<div class="subtip" style="color:var(--green);font-weight:700;">✅ 已提交，可点其他选项修改</div>';
+    h += '</div>';
+    return h;
+  }
+
+  if(phase === "closed" && d.stage){
+    const total = (d.counts||[]).reduce((a,b)=>a+b,0) || 1;
+    let h = '<div class="card">' +
+      '<div class="stage-tag">本轮结果 · 第 ' + (d.stageIndex+1) + ' 环节</div>' +
+      '<div class="q" style="font-size:16px;">' + esc(d.stage.q) + '</div><div class="opts">';
+    d.stage.options.forEach(function(o,i){
+      const c = (d.counts||[])[i]||0;
+      const pct = Math.round(c/total*100);
+      const sel = d.myChoice === i;
+      const right = (d.correctIndex === i);
+      h += '<div class="opt' + (sel?' sel':'') + '" style="pointer-events:none;' + (right?'border-color:#b9e4cc;background:#f4fcf7;':'') + '">' +
+        '<div class="bar" style="width:' + pct + '%"></div>' +
+        '<span class="mk">' + ["A","B","C","D","E"][i] + '</span>' +
+        '<div class="rl">' + esc(o.label) + (right ? ' <b style="color:var(--green);font-size:12px;">✅ 正确解</b>' : '') + '</div>' +
+        '<span class="pct">' + pct + '%</span></div>';
+    });
+    h += '</div>';
+
+    // 我这一票带来的结果
+    if(d.myOption){
+      const o = d.myOption;
+      h += '<div class="res ' + (o.ok ? "ok" : "bad") + '">' +
+        '<div class="rh">' + (o.ok ? "✅ 你选对了这一步" : "⚠️ 你这一手偏了一边") + '</div>' +
+        (o.title ? '<div class="rt">' + esc(o.title) + '</div>' : '') +
+        (o.text ? '<div class="rx">' + esc(o.text) + '</div>' : '') +
+        (d.myPair ? '<div class="mypair"><b>' + esc(d.myPair.a) + ' ⇄ ' + esc(d.myPair.b) + '：</b>' +
+          (o.ok ? '<span class="p-ok">这一对守住了</span>' : '<span class="p-bad">偏向了「' + esc(d.myPair.side) + '」</span>') +
+          (d.myPair.hint ? '<br>' + esc(d.myPair.hint) : '') + '</div>' : '') +
+        (o.anchor ? '<div class="an"><b>理论对应：</b>' + esc(o.anchor) + '</div>' : '') +
+        '</div>';
+    } else {
+      h += '<div class="res bad"><div class="rh">⚠️ 你没有作答</div><div class="rx">本轮已结束，先看看同学的选择和正确解，跟上思路。</div></div>';
+    }
+    h += '<div class="subtip">等待老师进入下一环节…</div></div>';
+    return h;
+  }
+
+  return '<div class="card"><div class="waiting"><div class="big">⏳</div><p>等待老师操作…</p></div></div>';
+}
+
+function mediaHtml(m){
+  const url = String(m.url||"");
+  const isVid = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+  if(!url) return "";
+  return isVid
+    ? '<video class="media" src="' + esc(url) + '" controls playsinline></video>'
+    : '<img class="media" src="' + esc(url) + '" alt="' + esc(m.caption||"情景图片") + '">';
+}
+/* 情景封面：矮条幅，带图注，用于开场/等待页 */
+function coverHtml(m){
+  if(!m || !m.url) return "";
+  const url = String(m.url);
+  const isVid = /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+  if(isVid) return mediaHtml(m);
+  return '<div class="coverb"><img src="' + esc(url) + '" alt="' + esc(m.caption||"情景图片") + '">' +
+    (m.caption ? '<div class="cb-cap">' + esc(m.caption) + '</div>' : '') + '</div>';
+}
+
+/* ---------- 个人复盘（课堂结束后） ---------- */
+function reviewHtml(d){
+  const r = d.review;
+  const sc = d.scenario || {};
+  let h = '<div class="card">' +
+    '<div class="stage-tag">' + esc(sc.emoji ? sc.emoji + " " : "") + esc(sc.title || "") + ' · 个人复盘</div>' +
+    '<div class="scoreline"><span class="big">' + r.score + '</span>' +
+      '<span class="of">/ ' + r.total + ' 关键抉择</span>' +
+      '<span class="lv" style="background:' + r.level.color + '">' + esc(r.level.tag) + '</span></div>' +
+    '<div style="font-size:19px;font-weight:800;color:var(--red-deep);font-family:KaiTi,serif;margin:8px 0 6px;">' +
+      esc(r.ending.emoji) + ' ' + esc(r.ending.title) + '</div>' +
+    '<div style="font-size:13.5px;line-height:1.9;color:#4a4038;">' + esc(r.ending.text) + '</div>' +
+    '</div>';
+
+  // 我的选择
+  h += '<div class="card"><div class="h3">📋 你的选择</div>';
+  r.items.forEach(function(it, i){
+    const m = it.ok === true ? '<span class="m ok">✔</span>' : (it.ok === false ? '<span class="m bad">✘</span>' : '<span class="m na">未答</span>');
+    const label = it.label ? esc(it.label) : "——";
+    h += '<div class="item"><span class="n">' + esc((it.title||"").split(" · ")[0] || ("第" + (i+1) + "幕")) + '</span>' +
+      '<span class="c">' + label + '</span>' + m + '</div>';
+  });
+  h += '</div>';
+
+  // 需要补的几幕：与教学内容挂钩
+  const wrong = r.items.filter(function(it){ return it.ok === false; });
+  if(wrong.length){
+    h += '<div class="card"><div class="h3">🩹 需要补的 ' + wrong.length + ' 幕（对照知识点）</div>';
+    wrong.forEach(function(it){
+      h += '<div class="fix">' +
+        '<div class="ft">' + esc(it.title) + '</div>' +
+        '<div class="fx"><b>你选了：</b>' + esc(it.label) + (it.side ? '（偏向了「' + esc(it.side) + '」）' : '') + '<br>' +
+          (it.text ? '<b>后果：</b>' + esc(it.text) : '') + '</div>' +
+        (it.anchor ? '<div class="fa"><b>对应的教学内容：</b>' + esc(it.anchor) + '</div>' : '') +
+        '</div>';
+    });
+    h += '</div>';
+  }
+
+  // 关系判定
+  if((r.pairs||[]).length){
+    h += '<div class="card"><div class="h3">🔍 关系判定：' + r.unified + ' / ' + r.pairTotal + ' 组立住</div>';
+    r.pairs.forEach(function(p){
+      const txt = p.state === "ok" ? '<span class="p-ok">✔ 立住了</span>'
+        : p.state === "bad" ? '<span class="p-bad">⚠ 偏「' + esc(p.side) + '」</span>'
+        : '<span class="p-none">未涉及</span>';
+      h += '<div class="pairline"><b>' + esc(p.a) + ' ⇄ ' + esc(p.b) + '：</b>' + txt +
+        (p.hint ? '<br><span style="color:#8a7a5e;font-size:12.5px;">' + esc(p.hint) + '</span>' : '') + '</div>';
+    });
+    h += '</div>';
+  }
+
+  // 教学要点
+  if((r.takeaways||[]).length){
+    h += '<div class="card"><div class="h3">📌 这个情景要记住的几句话</div>';
+    r.takeaways.forEach(function(t){
+      h += '<div class="tagline"><b>·</b> ' + esc(t) + '</div>';
+    });
+    h += '</div>';
+  }
+
+  // 讨论题
+  if((r.discuss||[]).length){
+    h += '<div class="card"><div class="h3">💬 带着你的复盘，参与讨论</div><ol class="qlist">' +
+      r.discuss.map(function(q){ return '<li>' + esc(q) + '</li>'; }).join("") + '</ol></div>';
+  }
+
+  h += '<div class="subtip">把这张复盘留给老师看一眼，再说说你的选择理由。</div>';
+  return h;
+}
+
+async function poll(){
+  if(!sid || ticking) return;
+  ticking = true;
+  try{
+    const r = await fetch("/api/me?id=" + encodeURIComponent(sid));
+    const d = await r.json();
+    renderMe(d);
+    if(d.ok && !joined){
+      joined = true;
+      document.getElementById("joinView").style.display="none";
+      document.getElementById("view").style.display="block";
+      document.getElementById("top").style.display="flex";
+    }
+  }catch(e){}
+  ticking = false;
+}
+
+if(sid){
+  document.getElementById("joinView").style.display="none";
+  document.getElementById("view").style.display="block";
+  document.getElementById("top").style.display="flex";
+  poll();
+}
+setInterval(poll, 1200);
+document.getElementById("nameInput").addEventListener("keydown", function(e){ if(e.key==="Enter") join(); });
+</script>
+</body>
+</html>
