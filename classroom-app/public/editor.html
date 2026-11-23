@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情景编辑器</title>
+<style>
+  :root{--red:#b81c22;--red-deep:#8c1418;--gold:#d4af37;--ink:#2b2622;--paper:#f6efe0;--paper2:#fffdf7;--green:#1f7a4d;--blue:#1f5fa8;--shadow:0 8px 24px rgba(80,20,20,.13);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;color:var(--ink);background:radial-gradient(circle at 10% 5%,rgba(212,175,55,.15),transparent 40%),var(--paper);min-height:100vh;}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 120px;}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .seal{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--red),var(--red-deep));color:#f2d57e;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;text-align:center;line-height:1.05;border:2px solid var(--gold);transform:rotate(-4deg);}
+  h1{font-family:"KaiTi",serif;font-size:23px;color:var(--red-deep);}
+  .sub{font-size:12.5px;color:#8a6d3b;margin-top:2px;}
+  .card{background:var(--paper2);border-radius:15px;padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h3{font-family:"KaiTi",serif;font-size:18px;color:var(--red-deep);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  label{display:block;font-size:12.5px;font-weight:700;color:#7a5c10;margin-bottom:5px;}
+  input[type=text],input[type=number],textarea,select{width:100%;font-family:inherit;font-size:14px;padding:10px 12px;border:2px solid #e6d8bb;border-radius:10px;outline:none;background:#fff;color:var(--ink);}
+  input:focus,textarea:focus,select:focus{border-color:var(--red);}
+  textarea{resize:vertical;line-height:1.7;}
+  .f{margin-bottom:12px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+  .hint{font-size:11.5px;color:#a08a66;margin-top:4px;line-height:1.6;}
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:10px;font-size:13.5px;font-weight:700;padding:10px 16px;transition:.15s;}
+  .b-red{background:var(--red);color:#fff;} .b-red:hover{background:var(--red-deep);}
+  .b-ghost{background:#fff;color:var(--red);border:2px solid var(--red);}
+  .b-plain{background:#fff;color:#7a5c10;border:2px solid #e0d2b0;}
+  .b-mini{background:#f4ecda;color:#7a5c10;padding:6px 11px;font-size:12px;}
+  .b-del{background:#fdeaea;color:var(--red);padding:6px 11px;font-size:12px;}
+  .stage{border:2px solid #eee0c2;border-radius:13px;padding:16px;margin-bottom:14px;background:#fffdf8;}
+  .stage .sh{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;}
+  .stage .sn{font-weight:800;color:var(--red-deep);font-size:14.5px;}
+  .opt{border:1px dashed #dccdaa;border-radius:11px;padding:13px;margin-bottom:10px;background:#fff;}
+  .opt .oh{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .opt .ok{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--green);}
+  .opt .ok input{width:17px;height:17px;accent-color:var(--green);}
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--paper2);border-top:2px solid var(--gold);padding:12px 16px;display:flex;gap:10px;justify-content:center;align-items:center;box-shadow:0 -6px 20px rgba(0,0,0,.08);flex-wrap:wrap;z-index:30;}
+  .msg{font-size:13px;font-weight:700;min-height:20px;}
+  .msg.ok{color:var(--green);} .msg.err{color:var(--red);}
+  .tabs{display:flex;gap:8px;margin-bottom:14px;}
+  .tabs button{background:#f1e7d2;color:#7a5c10;}
+  .tabs button.on{background:var(--red);color:#fff;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="seal">情景<br>编辑</div>
+      <div>
+        <h1 id="ttl">新建情景</h1>
+        <div class="sub">保存后立即出现在情景大厅，学生刷新即可看到，无需重新部署</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="b-plain" onclick="location.href='/'">← 情景大厅</button>
+      <button class="b-plain" onclick="preview()">👁 预览</button>
+    </div>
+  </header>
+
+  <div id="form"></div>
+</div>
+
+<div class="bar">
+  <span class="msg" id="msg"></span>
+  <button class="b-plain" onclick="exportOne()">导出这个情景</button>
+  <button class="b-plain" onclick="importOne()">导入 JSON</button>
+  <button class="b-del" id="btnDel" onclick="del()" style="display:none">删除情景</button>
+  <button class="b-red" onclick="save()">💾 保存并生效</button>
+</div>
+
+<script>
+let ed = null;
+let isNew = true;
+let draftText = "";   /* 从课件抽出的原始文字，重绘后要放回文本框 */
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function qs(k){ return new URLSearchParams(location.search).get(k); }
+
+function blankId(){ return "sc" + Date.now().toString(36).slice(-6); }
+
+function blankScenario(){
+  return {
+    id: blankId(),
+    title: "新情景",
+    subtitle: "",
+    emoji: "🎮",
+    mode: "judge",
+    intro: { kicker: "情 景 模 拟 · 选 择", lead: "", roleName: "", roleDesc: "", task: "", legendTitle: "先认一下这几组关系", legend: [] },
+    pairs: [{ a: "甲", b: "乙", hint: "" }],
+    dims: [{ key: "a", name: "维度一", icon: "●", color: "#b81c22" }],
+    base: { a: 10 },
+    stages: [ { title: "第一幕", scene: "", q: "你的选择是？", pair: 0, options: [
+      { label: "选项一", ok: true, title: "", text: "", anchor: "", tip: "" },
+      { label: "选项二", side: "乙", title: "", text: "", anchor: "", tip: "" }
+    ]} ],
+    endings: [ { type: "score", min: 1, emoji: "🏅", title: "做得好", text: "" }, { type: "default", emoji: "📋", title: "还需要改进", text: "" } ],
+    sections: [],
+    discuss: []
+  };
+}
+
+/* ---------- 加载 ---------- */
+(async function(){
+  const id = qs("id");
+  if(id){
+    try{
+      const r = await fetch("/api/scenario?id=" + encodeURIComponent(id));
+      if(r.ok){ ed = await r.json(); isNew = false; }
+    }catch(e){}
+  }
+  if(!ed) ed = blankScenario();
+  ensureShape();
+  render();
+})();
+
+function ensureShape(){
+  ed.intro = ed.intro || {};
+  ed.cover = ed.cover || {};
+  if(!Array.isArray(ed.stages) || !ed.stages.length) ed.stages = blankScenario().stages;
+  if(ed.mode === "attrs"){
+    if(!Array.isArray(ed.dims) || !ed.dims.length) ed.dims = blankScenario().dims;
+    ed.base = ed.base || {};
+    ed.dims.forEach(d => { if(ed.base[d.key] === undefined) ed.base[d.key] = 10; });
+  } else {
+    if(!Array.isArray(ed.pairs) || !ed.pairs.length) ed.pairs = blankScenario().pairs;
+  }
+  if(!Array.isArray(ed.endings) || !ed.endings.length) ed.endings = blankScenario().endings;
+  ed.sections = ed.sections || [];
+  ed.discuss = ed.discuss || [];
+  ed.takeaways = ed.takeaways || [];
+}
+
+/* ---------- 读取表单 ---------- */
+function getPath(obj, p){ return p.split(".").reduce((o,k)=> (o==null?undefined:o[k]), obj); }
+function setPath(obj, p, v){
+  const ks = p.split(".");
+  let o = obj;
+  for(let i=0;i<ks.length-1;i++){ if(o[ks[i]] == null) o[ks[i]] = {}; o = o[ks[i]]; }
+  o[ks[ks.length-1]] = v;
+}
+function syncFromForm(){
+  document.querySelectorAll("[data-p]").forEach(function(el){
+    const p = el.getAttribute("data-p");
+    let v = el.type === "checkbox" ? el.checked : el.value;
+    if(el.type === "number") v = v === "" ? "" : Number(v);
+    if(p.indexOf(".ok") > -1 && el.type === "checkbox"){ if(!v) v = false; }
+    setPath(ed, p, v);
+  });
+  // 清理空 key 的 dims/base
+  if(ed.mode === "attrs"){
+    (ed.dims||[]).forEach(d => { if(!d.key) d.key = "d" + Math.random().toString(36).slice(2,5); });
+    (ed.dims||[]).forEach(d => { if(ed.base[d.key] === undefined) ed.base[d.key] = 0; });
+  }
+}
+
+/* ---------- 渲染 ---------- */
+function render(){
+  document.getElementById("ttl").textContent = isNew ? "新建情景" : ("编辑：" + (ed.title || ed.id));
+  document.getElementById("btnDel").style.display = isNew ? "none" : "inline-block";
+  const m = ed.mode || "judge";
+
+  let h = "";
+
+  /* 从文本生成草稿 */
+  h += '<div class="card" style="background:#f3f7fb;">' +
+    '<h3 style="color:#1f5fa8;">⓪ 导入课件，自动生成草稿（可选）</h3>' +
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">' +
+      '<input type="file" id="fileBox" accept=".docx,.pptx,.txt,.md" style="display:none" onchange="uploadFile(this)">' +
+      '<button class="b-mini" onclick="document.getElementById(\'fileBox\').click()">📄 上传 Word / PPT</button>' +
+      '<span class="hint" style="margin:0;" id="upMsg">支持 .docx / .pptx / .txt / .md；上传后自动抽文字、切成若干幕。</span>' +
+    '</div>' +
+    '<div class="hint" style="margin-bottom:8px;color:#33506b;">也可以直接把文字粘在下面（每段之间空一行），点「生成幕骨架」会按段落切成若干幕，并给每幕填好「3 个待改的选项」骨架。<b>生成会覆盖当前的「每一幕」，只建议在新建时用。</b></div>' +
+    '<textarea id="draftBox" rows="5" placeholder="示例：&#10;方案公示第一天，1楼住户把公示单撕了……&#10;&#10;方案定了，又起争执……"></textarea>' +
+    '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">' +
+      '<button class="b-mini" onclick="genDraft()">✂ 按段落生成幕骨架</button>' +
+      '<button class="b-mini" onclick="genBySlide()">🖼 按幻灯片页生成</button>' +
+      '<span class="hint" style="margin:0;">生成后逐幕补上正确解和讲评即可。</span>' +
+    '</div></div>';
+
+  /* 基本信息 */
+  h += '<div class="card"><h3>① 基本信息</h3>' +
+    '<div class="row3">' +
+      '<div class="f"><label>标题</label><input type="text" data-p="title" value="' + esc(ed.title) + '" placeholder="例：六号楼电梯记"></div>' +
+      '<div class="f"><label>副标题</label><input type="text" data-p="subtitle" value="' + esc(ed.subtitle) + '" placeholder="例：全过程人民民主 · 加装电梯"></div>' +
+      '<div class="f"><label>图标 emoji</label><input type="text" data-p="emoji" value="' + esc(ed.emoji) + '" placeholder="🏢"></div>' +
+    '</div>' +
+    '<div class="row2">' +
+      '<div class="f"><label>结算方式</label><select data-p="mode" onchange="switchMode(this.value)">' +
+        '<option value="judge"' + (m === "judge" ? " selected" : "") + '>判断抉择（每幕有正确解 / 四对关系）</option>' +
+        '<option value="attrs"' + (m === "attrs" ? " selected" : "") + '>属性养成（每幕加减维度值）</option>' +
+      '</select><div class="hint">判断型适合价值辨析；属性型适合“多个维度此消彼长”。</div></div>' +
+      '<div class="f"><label>ID（网址里用，字母数字）</label><input type="text" data-p="id" value="' + esc(ed.id) + '" ' + (isNew ? "" : "readonly style='background:#f4eee0'") + '><div class="hint">' + (isNew ? "保存后不建议再改，改了等于新情景。" : "已保存的情景不能改 ID。") + '</div></div>' +
+    '</div></div>';
+
+  /* 开场 */
+  h += '<div class="card"><h3>② 开场与角色</h3>' +
+    '<div class="f"><label>一句话背景（大字下方）</label><textarea data-p="intro.lead" rows="2" placeholder="例：一栋1998年建成的6层老楼，没有电梯……">' + esc(ed.intro.lead) + '</textarea></div>' +
+    '<div class="row2">' +
+      '<div class="f"><label>顶部小字</label><input type="text" data-p="intro.kicker" value="' + esc(ed.intro.kicker) + '" placeholder="情 景 模 拟"></div>' +
+      '<div class="f"><label>角色名</label><input type="text" data-p="intro.roleName" value="' + esc(ed.intro.roleName) + '" placeholder="例：6号楼加装电梯自治小组组长"></div>' +
+    '</div>' +
+    '<div class="f"><label>角色说明</label><textarea data-p="intro.roleDesc" rows="2">' + esc(ed.intro.roleDesc) + '</textarea></div>' +
+    '<div class="f"><label>任务说明</label><textarea data-p="intro.task" rows="2" placeholder="例：六个关口，每一关都有三张牌……">' + esc(ed.intro.task) + '</textarea></div>' +
+    '<div class="row2" style="margin-top:12px;">' +
+      '<div class="f"><label>封面图 / 视频网址（大厅卡片、开场页、学生端都会显示）</label><input type="text" data-p="cover.url" value="' + esc((ed.cover||{}).url || "") + '" placeholder="https://……/laojiu.jpg 或 .mp4"><div class="hint">讲老旧小区改造这类题材，一张现场照片比十行文字管用。</div></div>' +
+      '<div class="f"><label>封面图注（一句话说明这是哪儿）</label><input type="text" data-p="cover.caption" value="' + esc((ed.cover||{}).caption || "") + '" placeholder="例：1998 年建成的 6 号楼，没有电梯"></div>' +
+    '</div></div>';
+
+  /* 维度 / 关系 */
+  if(m === "judge"){
+    h += '<div class="card"><h3>③ 要考察的几组关系（可留空）' +
+      '<button class="b-mini" onclick="addPair()">＋ 加一组</button></h3>' +
+      '<div class="hint" style="margin-bottom:10px;">每组两个词，例如「过程民主 ⇄ 成果民主」。某一组只要有一幕选偏了，就判定为“没立住”。</div>';
+    (ed.pairs || []).forEach(function(p, i){
+      h += '<div class="row3" style="margin-bottom:10px;align-items:end;">' +
+        '<div><label>左</label><input type="text" data-p="pairs.' + i + '.a" value="' + esc(p.a) + '"></div>' +
+        '<div><label>右</label><input type="text" data-p="pairs.' + i + '.b" value="' + esc(p.b) + '"></div>' +
+        '<div style="display:flex;gap:8px;align-items:end;"><div style="flex:1;"><label>点评（一句话）</label><input type="text" data-p="pairs.' + i + '.hint" value="' + esc(p.hint) + '"></div>' +
+        '<button class="b-del" onclick="delPair(' + i + ')">删</button></div></div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div class="card"><h3>③ 培养的维度' +
+      '<button class="b-mini" onclick="addDim()">＋ 加一个</button></h3>' +
+      '<div class="hint" style="margin-bottom:10px;">每个维度 0–100，起始值自己定。选项里用「维度加减」表示影响。</div>';
+    (ed.dims || []).forEach(function(d, i){
+      h += '<div class="row3" style="margin-bottom:10px;align-items:end;">' +
+        '<div><label>名称</label><input type="text" data-p="dims.' + i + '.name" value="' + esc(d.name) + '"></div>' +
+        '<div><label>键（英文）</label><input type="text" data-p="dims.' + i + '.key" value="' + esc(d.key) + '"></div>' +
+        '<div><label>起始值</label><input type="number" data-p="base.' + esc(d.key) + '" value="' + (ed.base[d.key] || 0) + '" min="0" max="100"></div>' +
+      '</div>' +
+      '<div class="row3" style="margin-bottom:14px;align-items:end;">' +
+        '<div><label>图标</label><input type="text" data-p="dims.' + i + '.icon" value="' + esc(d.icon) + '"></div>' +
+        '<div><label>颜色</label><input type="text" data-p="dims.' + i + '.color" value="' + esc(d.color) + '" placeholder="#b81c22"></div>' +
+        '<div><button class="b-del" onclick="delDim(' + i + ')">删掉这个维度</button></div>' +
+      '</div>';
+    });
+    h += '</div>';
+  }
+
+  /* 幕 */
+  h += '<div class="card"><h3>④ 每一幕' +
+    '<button class="b-mini" onclick="addStage()">＋ 加一幕</button></h3>';
+  ed.stages.forEach(function(st, si){
+    h += '<div class="stage"><div class="sh"><span class="sn">第 ' + (si+1) + ' 幕</span>' +
+      '<span style="display:flex;gap:8px;">' +
+        '<button class="b-mini" onclick="moveStage(' + si + ',-1)">↑</button>' +
+        '<button class="b-mini" onclick="moveStage(' + si + ',1)">↓</button>' +
+        '<button class="b-del" onclick="delStage(' + si + ')">删这一幕</button></span></div>' +
+      '<div class="row2"><div class="f"><label>幕名</label><input type="text" data-p="stages.' + si + '.title" value="' + esc(st.title) + '" placeholder="第一幕 · 意见"></div>';
+    if(m === "judge" && (ed.pairs||[]).length){
+      h += '<div class="f"><label>考察哪一组关系</label><select data-p="stages.' + si + '.pair">' +
+        '<option value="">不指定</option>' +
+        ed.pairs.map(function(p, pi){ return '<option value="' + pi + '"' + (Number(st.pair) === pi ? " selected" : "") + '>' + (pi+1) + '. ' + esc(p.a) + ' ⇄ ' + esc(p.b) + '</option>'; }).join("") +
+        '</select></div>';
+    }
+    h += '</div>' +
+      '<div class="row2"><div class="f"><label>配图 / 视频地址（可选）</label><input type="text" data-p="stages.' + si + '.media.url" value="' + esc(st.media && st.media.url) + '" placeholder="https://… .jpg 或 .mp4"></div>' +
+      '<div class="f"><label>图注（可选）</label><input type="text" data-p="stages.' + si + '.media.caption" value="' + esc(st.media && st.media.caption) + '"></div></div>' +
+      '<div class="f"><label>情景描述（发生了什么事）</label><textarea data-p="stages.' + si + '.scene" rows="3">' + esc(st.scene) + '</textarea></div>' +
+      '<div class="f"><label>问题（要学生决定什么）</label><input type="text" data-p="stages.' + si + '.q" value="' + esc(st.q) + '"></div>';
+
+    (st.options || []).forEach(function(o, oi){
+      h += '<div class="opt"><div class="oh"><b style="color:#8a6d3b;">选项 ' + (["A","B","C","D","E"][oi] || oi+1) + '</b>';
+      if(m === "judge"){
+        h += '<span class="ok"><input type="checkbox" data-p="stages.' + si + '.options.' + oi + '.ok"' + (o.ok ? " checked" : "") + '>这是正确解</span>' +
+          '<span style="flex:1;"></span><input type="text" data-p="stages.' + si + '.options.' + oi + '.side" value="' + esc(o.side) + '" placeholder="偏向了哪一侧（如：成果）" style="max-width:190px;padding:7px 10px;font-size:12.5px;">';
+      }
+      h += '<button class="b-del" onclick="delOption(' + si + ',' + oi + ')">删</button></div>' +
+        '<div class="f"><textarea data-p="stages.' + si + '.options.' + oi + '.label" rows="2" placeholder="选项文字">' + esc(o.label) + '</textarea></div>';
+      if(m === "attrs"){
+        h += '<div class="f"><label>维度加减（不改就填 0）</label><div class="row3">' +
+          (ed.dims||[]).map(function(d){
+            const v = (o.delta && o.delta[d.key]) || 0;
+            return '<div><label style="font-weight:600;color:#8a7a5e;">' + esc(d.name) + '</label><input type="number" data-p="stages.' + si + '.options.' + oi + '.delta.' + esc(d.key) + '" value="' + v + '"></div>';
+          }).join("") + '</div></div>';
+      }
+      h += '<div class="row3">' +
+        '<div class="f"><label>结果标题（弹窗大字）</label><input type="text" data-p="stages.' + si + '.options.' + oi + '.title" value="' + esc(o.title) + '" placeholder="例：票数够了，人心散了"></div>' +
+        '<div class="f" style="grid-column:span 2;"><label>结果说明</label><textarea data-p="stages.' + si + '.options.' + oi + '.text" rows="2">' + esc(o.text) + '</textarea></div></div>' +
+        '<div class="row2">' +
+        '<div class="f"><label>理论锚点（一句原理）</label><textarea data-p="stages.' + si + '.options.' + oi + '.anchor" rows="2">' + esc(o.anchor) + '</textarea></div>' +
+        '<div class="f"><label>课堂讲评（大屏用，简短）</label><textarea data-p="stages.' + si + '.options.' + oi + '.tip" rows="2">' + esc(o.tip) + '</textarea></div></div>' +
+      '</div>';
+    });
+    h += '<button class="b-mini" onclick="addOption(' + si + ')">＋ 加一个选项</button></div>';
+  });
+  h += '</div>';
+
+  /* 结局 */
+  h += '<div class="card"><h3>⑤ 结局判定（从上往下匹配，第一个符合的生效）' +
+    '<button class="b-mini" onclick="addEnding()">＋ 加一条</button></h3>';
+  (ed.endings||[]).forEach(function(en, i){
+    h += '<div class="row3" style="margin-bottom:10px;align-items:end;">' +
+      '<div><label>类型</label><select data-p="endings.' + i + '.type">' +
+        (m === "attrs"
+          ? '<option value="minDim"' + (en.type === "minDim" ? " selected" : "") + '>最短板 ≥ N</option>' +
+            '<option value="weakest"' + (en.type === "weakest" ? " selected" : "") + '>最短板是某维度</option>'
+          : '<option value="score"' + (en.type === "score" ? " selected" : "") + '>答对 ≥ N 题</option>') +
+        '<option value="default"' + (en.type === "default" ? " selected" : "") + '>兜底</option>' +
+      '</select></div>' +
+      '<div><label>' + (m === "attrs" ? 'N（阈值）' : 'N（答对题数）') + '</label><input type="number" data-p="endings.' + i + '.min" value="' + (en.min == null ? "" : en.min) + '"></div>' +
+      '<div style="display:flex;gap:8px;align-items:end;">' +
+        (m === "attrs" ? '<div style="flex:1;"><label>维度</label><select data-p="endings.' + i + '.dim"><option value="">-</option>' +
+          (ed.dims||[]).map(function(d){ return '<option value="' + esc(d.key) + '"' + (en.dim === d.key ? " selected" : "") + '>' + esc(d.name) + '</option>'; }).join("") +
+          '</select></div>' : '') +
+        '<button class="b-del" onclick="delEnding(' + i + ')">删</button></div></div>' +
+      '<div class="row3" style="margin-bottom:16px;">' +
+        '<div><label>图标</label><input type="text" data-p="endings.' + i + '.emoji" value="' + esc(en.emoji) + '"></div>' +
+        '<div><label>结局名</label><input type="text" data-p="endings.' + i + '.title" value="' + esc(en.title) + '"></div>' +
+        '<div><label>一句话</label><input type="text" data-p="endings.' + i + '.text" value="' + esc(en.text) + '"></div>' +
+      '</div>';
+  });
+  h += '</div>';
+
+  /* 教学板块 */
+  h += '<div class="card"><h3>⑥ 结局页附加板块（可选，支持 HTML）' +
+    '<button class="b-mini" onclick="addSection()">＋ 加一块</button></h3>';
+  ed.sections.forEach(function(s, i){
+    h += '<div class="stage"><div class="sh"><span class="sn">板块 ' + (i+1) + '</span><button class="b-del" onclick="delSection(' + i + ')">删</button></div>' +
+      '<div class="f"><label>标题</label><input type="text" data-p="sections.' + i + '.title" value="' + esc(s.title) + '"></div>' +
+      '<div class="f"><label>内容（HTML，可用 &lt;table class="tab"&gt;、&lt;div class="chain"&gt; 等）</label>' +
+      '<textarea data-p="sections.' + i + '.html" rows="5" style="font-family:Consolas,monospace;font-size:12.5px;">' + esc(s.html) + '</textarea></div></div>';
+  });
+  h += '</div>';
+
+  /* 教学要点 */
+  h += '<div class="card"><h3>⑦ 教学要点（每行一条，课堂结束后学生会看到）</h3>' +
+    '<textarea id="takeBox" rows="5" placeholder="每行一条，写这个情景要学生记住的结论">' + esc((ed.takeaways || []).join("\n")) + '</textarea></div>';
+
+  /* 讨论 */
+  h += '<div class="card"><h3>⑧ 课堂讨论题（每行一题）</h3>' +
+    '<textarea id="discussBox" rows="5" placeholder="每行一题">' + esc((ed.discuss||[]).join("\n")) + '</textarea></div>';
+
+  document.getElementById("form").innerHTML = h;
+  /* 重绘后把上次抽出的课件文字放回文本框，方便反复生成 */
+  const db = document.getElementById("draftBox");
+  if(db && draftText) db.value = draftText;
+}
+
+/* ---------- 结构操作 ---------- */
+function sync(){
+  syncFromForm();
+  const db = document.getElementById("discussBox");
+  if(db) ed.discuss = db.value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const tb = document.getElementById("takeBox");
+  if(tb) ed.takeaways = tb.value.split("\n").map(s=>s.trim()).filter(Boolean);
+}
+function afterStruct(){ sync(); ensureShape(); render(); }
+
+function switchMode(v){ sync(); ed.mode = v; ensureShape(); render(); }
+
+/* ---------- 课件 → 幕骨架 ---------- */
+/* （draftText 在脚本顶部声明，重绘时会把内容放回文本框） */
+
+/* 把过短的碎片并进前一段（教案里「授课教师：」「蒲卓林」这种） */
+function mergeShort(chunks, min){
+  const out = [];
+  chunks.forEach(function(t){
+    if(out.length && t.length < (min || 45)) out[out.length-1] += " " + t;
+    else out.push(t);
+  });
+  return out;
+}
+
+function cutByPara(raw){
+  // 按空行切段；若没有空行，则按「1. / 一、 / 第一幕」之类的序号切
+  let chunks = raw.split(/\n\s*\n+/).map(s => s.trim()).filter(s => s.length > 10);
+  if(chunks.length < 2){
+    chunks = raw.split(/\n(?=\s*(?:\d+[．.、]|[一二三四五六七八九十]+[、．]|第[一二三四五六七八九十\d]+[幕环节步]))/).map(s => s.trim()).filter(s => s.length > 10);
+  }
+  if(chunks.length < 2){
+    // 最后兜底：按句号聚合成两段
+    const parts = raw.split(/(?<=[。！？])/).map(s => s.trim()).filter(Boolean);
+    const mid = Math.ceil(parts.length / 2);
+    chunks = [parts.slice(0, mid).join(""), parts.slice(mid).join("")].filter(s => s.length > 10);
+  }
+  return mergeShort(chunks, 45);
+}
+
+function cutBySlide(raw){
+  let chunks = raw.split(/\n{2,}(?=【第\d+页】)/).map(s => s.trim()).filter(Boolean);
+  if(chunks.length < 2) chunks = raw.split(/(?=【第\d+页】)/).map(s => s.trim()).filter(Boolean);
+  return mergeShort(chunks, 30);
+}
+
+function buildFromChunks(chunks, hint){
+  if(!chunks.length){ alert("没能切出段落，试试在每段之间空一行。"); return; }
+  sync();
+  ed.stages = chunks.slice(0, 16).map(function(txt, i){
+    const clean = txt.replace(/\s+/g, " ").trim();
+    const short = clean.length > 60 ? clean.slice(0, 57) + "…" : clean;
+    return {
+      title: "第" + (i+1) + "幕",
+      scene: clean.length > 400 ? clean.slice(0, 400) + "…" : clean,
+      q: "面对这个情景，你会怎么做？（请改成具体的问题）",
+      pair: (ed.mode === "judge" && (ed.pairs||[]).length) ? 0 : undefined,
+      options: ed.mode === "attrs"
+        ? [ { label: "（正确做法，待填写）" + short, delta: {} }, { label: "（错误做法一，待填写）" + short, delta: {} }, { label: "（错误做法二，待填写）" + short, delta: {} } ]
+        : [ { label: "（正确解法，待填写）" + short, ok: true }, { label: "（错误选项一，待填写）" + short, side: "待填偏向" }, { label: "（错误选项二，待填写）" + short, side: "待填偏向" } ]
+    };
+  });
+  render();
+  const over = chunks.length > 16 ? "（原文有 " + chunks.length + " 段，只取了前 16 段）" : "";
+  msg("已生成 " + ed.stages.length + " 幕骨架" + over + "，请逐幕补上问题、正确解和讲评", "ok");
+}
+
+function genDraft(){
+  const box = document.getElementById("draftBox");
+  const raw = (box && box.value || "").trim();
+  if(!raw){ alert("先上传课件，或把文字粘贴进来。"); return; }
+  draftText = raw;
+  buildFromChunks(cutByPara(raw));
+}
+
+function genBySlide(){
+  const box = document.getElementById("draftBox");
+  const raw = (box && box.value || "").trim();
+  if(!raw){ alert("先上传 PPT，或把文字粘贴进来。"); return; }
+  draftText = raw;
+  buildFromChunks(cutBySlide(raw), "slide");
+}
+
+/* ---------- 在浏览器里直接解包 docx/pptx（大文件也不卡服务器） ---------- */
+function zipEntries(u8, dv){
+  let eo = -1;
+  const stop = Math.max(0, u8.length - 66000);
+  for(let i = u8.length - 22; i >= stop; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eo = i; break; }
+  }
+  if(eo < 0) throw new Error("这不是有效的 Office 文件（找不到 zip 结构）");
+  const count = dv.getUint16(eo + 10, true);
+  let off = dv.getUint32(eo + 16, true);
+  const map = new Map();
+  for(let i = 0; i < count; i++){
+    if(off + 46 > u8.length || dv.getUint32(off, true) !== 0x02014b50) break;
+    const method = dv.getUint16(off + 10, true);
+    const csize = dv.getUint32(off + 20, true);
+    const nlen = dv.getUint16(off + 28, true);
+    const elen = dv.getUint16(off + 30, true);
+    const clen = dv.getUint16(off + 32, true);
+    const lho = dv.getUint32(off + 42, true);
+    const nm = new TextDecoder().decode(u8.subarray(off + 46, off + 46 + nlen));
+    map.set(nm, { method, csize, lho });
+    off += 46 + nlen + elen + clen;
+  }
+  return map;
+}
+async function zipRead(u8, dv, ent){
+  const nlen = dv.getUint16(ent.lho + 26, true);
+  const elen = dv.getUint16(ent.lho + 28, true);
+  const start = ent.lho + 30 + nlen + elen;
+  const raw = u8.subarray(start, start + ent.csize);
+  if(ent.method === 0) return new TextDecoder().decode(raw);
+  if(ent.method !== 8) throw new Error("不支持的压缩方式");
+  const ds = new DecompressionStream("deflate-raw");
+  const out = await new Response(new Blob([raw]).stream().pipeThrough(ds)).arrayBuffer();
+  return new TextDecoder().decode(out);
+}
+function decodeEnt(s){
+  return String(s)
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+    .replace(/&amp;/g, "&");
+}
+function xmlParagraphs(xml){
+  const out = [];
+  String(xml).split(/<\/w:p>|<\/a:p>/).forEach(function(seg){
+    const ts = [...seg.matchAll(/<(?:w|a):t(?:\s[^>]*)?>([\s\S]*?)<\/(?:w|a):t>/g)].map(m => decodeEnt(m[1]));
+    const line = ts.join("").replace(/\s+/g, " ").trim();
+    if(line) out.push(line);
+  });
+  return out;
+}
+function slideNo(n){ const m = n.match(/slide(\d+)\.xml$/i); return m ? parseInt(m[1], 10) : 0; }
+
+async function extractFromFile(file){
+  const name = String(file.name || "").toLowerCase();
+  const ext = (name.match(/\.([a-z0-9]+)$/) || [, ""])[1];
+  if(ext === "txt" || ext === "md" || ext === "markdown"){
+    const t = (await file.text()).replace(/\r\n?/g, "\n").trim();
+    return { ok: true, kind: "text", text: t.slice(0, 120000), count: t.split(/\n\s*\n/).filter(Boolean).length };
+  }
+  if(ext === "doc" || ext === "ppt") throw new Error("老格式 ." + ext + " 读不了，请「另存为」.doc" + (ext === "ppt" ? "t" : "x") + " 后再上传");
+  if(ext !== "docx" && ext !== "pptx") throw new Error("只支持 .docx / .pptx / .txt / .md");
+
+  const u8 = new Uint8Array(await file.arrayBuffer());
+  const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+  const map = zipEntries(u8, dv);
+
+  if(ext === "docx"){
+    const ent = map.get("word/document.xml");
+    if(!ent) throw new Error("这个 .docx 里没有正文（可能是加密或损坏文档）");
+    const ps = xmlParagraphs(await zipRead(u8, dv, ent));
+    if(!ps.length) throw new Error("没抽到文字（可能是纯图片/扫描件）");
+    const title = ps[0] && ps[0].length <= 40 ? ps[0] : "";
+    const body = title ? ps.slice(1) : ps;
+    return { ok: true, kind: "docx", title, text: body.join("\n").replace(/\n{3,}/g, "\n\n").trim().slice(0, 120000), count: body.length };
+  }
+
+  const names = [...map.keys()].filter(n => /^ppt\/slides\/slide\d+\.xml$/.test(n)).sort((a, b) => slideNo(a) - slideNo(b));
+  if(!names.length) throw new Error("这个 .pptx 里没有幻灯片");
+  const chunks = [];
+  for(let i = 0; i < names.length; i++){
+    const ps = xmlParagraphs(await zipRead(u8, dv, map.get(names[i])));
+    if(ps.length) chunks.push("【第" + (i + 1) + "页】" + ps.join(" "));
+  }
+  if(!chunks.length) throw new Error("幻灯片里没抽到文字（可能是纯图片页）");
+  return { ok: true, kind: "pptx", title: "", text: chunks.join("\n\n").slice(0, 120000), count: chunks.length };
+}
+
+/* 上传 .docx / .pptx / .txt / .md → 抽文字 → 自动建骨架 */
+async function uploadFile(inp){
+  const f = inp.files && inp.files[0];
+  if(!f) return;
+  const tip = document.getElementById("upMsg");
+  const say = t => { if(tip) tip.textContent = t; };
+  say("正在读取「" + f.name + "」（" + Math.round(f.size / 1048576 * 10) / 10 + " MB）…");
+  let j = null;
+  try{
+    if(typeof DecompressionStream === "function"){
+      j = await extractFromFile(f);                 /* 浏览器本地解包，不占服务器 */
+    }else{
+      say("浏览器较旧，改为上传到服务器解析…");
+      const r = await fetch("/api/parse?name=" + encodeURIComponent(f.name), {
+        method: "POST", headers: { "Content-Type": "application/octet-stream" }, body: await f.arrayBuffer()
+      });
+      j = await r.json();
+    }
+  }catch(e){
+    say("❌ " + (e.message || "读取失败"));
+    inp.value = "";
+    return;
+  }
+  if(!j || !j.ok){ say("❌ " + ((j && j.error) || "解析失败")); inp.value = ""; return; }
+
+  draftText = j.text;
+  const box = document.getElementById("draftBox");
+  if(box) box.value = j.text;
+  if(j.title && (!ed.title || !ed.title.trim() || ed.title === "新情景")) ed.title = j.title;
+  say("✅ 已从「" + f.name + "」抽到 " + j.text.length + " 字、" + j.count + " 个段落。");
+  const bySlide = j.kind === "pptx";
+  if(!confirm("已抽到 " + j.text.length + " 字。现在按" + (bySlide ? "幻灯片页" : "段落") + "生成幕骨架吗？\n（会覆盖当前的「每一幕」）")){
+    say("已填入下面的文本框，可以手动点「生成幕骨架」。");
+    render();
+    const b2 = document.getElementById("draftBox"); if(b2) b2.value = j.text;
+    inp.value = ""; return;
+  }
+  buildFromChunks(bySlide ? cutBySlide(j.text) : cutByPara(j.text));
+  inp.value = "";
+}
+
+function addStage(){ afterStruct(); ed.stages.push({ title: "第" + (ed.stages.length+1) + "幕", scene: "", q: "", options: [ { label: "选项一", ok: true }, { label: "选项二" } ] }); render(); }
+function delStage(i){ if(ed.stages.length<=1){ alert("至少保留一幕"); return; } afterStruct(); ed.stages.splice(i,1); render(); }
+function moveStage(i, d){ afterStruct(); const j = i+d; if(j<0||j>=ed.stages.length) return; const t = ed.stages[i]; ed.stages[i]=ed.stages[j]; ed.stages[j]=t; render(); }
+function addOption(si){ afterStruct(); ed.stages[si].options.push({ label: "新选项" }); render(); }
+function delOption(si, oi){ afterStruct(); if(ed.stages[si].options.length<=2){ alert("至少两个选项"); return; } ed.stages[si].options.splice(oi,1); render(); }
+function addPair(){ afterStruct(); ed.pairs = ed.pairs || []; ed.pairs.push({ a: "左", b: "右", hint: "" }); render(); }
+function delPair(i){ afterStruct(); ed.pairs.splice(i,1); render(); }
+function addDim(){ afterStruct(); const k = "d" + ((ed.dims||[]).length+1); ed.dims.push({ key: k, name: "新维度", icon: "●", color: "#b81c22" }); ed.base[k] = 10; render(); }
+function delDim(i){ afterStruct(); if(ed.dims.length<=1){ alert("至少一个维度"); return; } const k = ed.dims[i].key; ed.dims.splice(i,1); delete ed.base[k]; render(); }
+function addEnding(){ afterStruct(); ed.endings.push({ type: "default", emoji: "🎯", title: "结局", text: "" }); render(); }
+function delEnding(i){ afterStruct(); ed.endings.splice(i,1); render(); }
+function addSection(){ afterStruct(); ed.sections.push({ title: "新板块", html: "" }); render(); }
+function delSection(i){ afterStruct(); ed.sections.splice(i,1); render(); }
+
+/* ---------- 保存 ---------- */
+async function save(){
+  sync();
+  if(!ed.title || !ed.title.trim()){ msg("请填写标题", "err"); return; }
+  if(!ed.id || !ed.id.trim()){ msg("请填写 ID", "err"); return; }
+  if(ed.mode === "judge"){
+    const bad = ed.stages.findIndex(st => !(st.options||[]).some(o => o.ok));
+    if(bad >= 0){ msg("第 " + (bad+1) + " 幕还没有标记正确解", "err"); return; }
+  }
+  const r = await fetch("/api/scenario", { method: "POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify(ed) });
+  const j = await r.json();
+  if(j.ok){
+    ed = j.scenario; isNew = false;
+    history.replaceState(null, "", "/editor?id=" + encodeURIComponent(ed.id));
+    msg("已保存并生效 ✅ 大厅里已能打开", "ok");
+    render();
+  } else {
+    msg((j.error || ["保存失败"]).join("；"), "err");
+  }
+}
+function msg(t, cls){
+  const el = document.getElementById("msg");
+  el.textContent = t; el.className = "msg " + (cls || "");
+  if(cls === "ok") setTimeout(()=>{ el.textContent=""; }, 4000);
+}
+
+function preview(){
+  if(isNew){ alert("先保存，再预览。"); return; }
+  window.open("/play?s=" + encodeURIComponent(ed.id), "_blank");
+}
+
+function exportOne(){
+  sync();
+  const blob = new Blob([JSON.stringify(ed, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (ed.id || "scenario") + ".json";
+  a.click();
+}
+
+function importOne(){
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = function(){
+    const f = inp.files[0]; if(!f) return;
+    const fr = new FileReader();
+    fr.onload = function(){
+      try{
+        const d = JSON.parse(fr.result);
+        const obj = Array.isArray(d) ? d[0] : (d.scenarios ? d.scenarios[0] : d);
+        if(!obj || !obj.stages){ alert("这不是一个情景 JSON"); return; }
+        ed = obj; isNew = true;
+        if(!ed.id) ed.id = blankId();
+        ensureShape(); render(); msg("已载入，检查后点保存", "ok");
+      }catch(e){ alert("JSON 解析失败： " + e.message); }
+    };
+    fr.readAsText(f);
+  };
+  inp.click();
+}
+
+async function del(){
+  if(!confirm("确定删除《" + ed.title + "》？此操作不可撤销。")) return;
+  const r = await fetch("/api/scenario?id=" + encodeURIComponent(ed.id), { method: "DELETE" });
+  const j = await r.json();
+  if(j.ok) location.href = "/";
+  else alert((j.error || ["删除失败"]).join("；"));
+}
+</script>
+</body>
+</html>
